@@ -1,11 +1,24 @@
 import json
 import os
 import time
+import sys
 from board import Board, Colors
 from ai import TicTacToeAI
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+def thinking_spinner(duration=1.0):
+    """Displays a simple spinner animation for CPU turns."""
+    chars = ['|', '/', '-', '\\']
+    end_time = time.time() + duration
+    i = 0
+    while time.time() < end_time:
+        sys.stdout.write(f"\r{Colors.CYAN}CPU is thinking... {chars[i % 4]}{Colors.RESET}")
+        sys.stdout.flush()
+        time.sleep(0.2)
+        i += 1
+    print("\n")
 
 class GameSession:
     def __init__(self, mode='PvP', difficulty='Hard', size=3, markers=None):
@@ -14,9 +27,34 @@ class GameSession:
         self.mode = mode 
         self.difficulty = difficulty
         self.markers = markers if markers else {'X': 'X', 'O': 'O'}
-        # Create separate AI instances for each player if needed (especially for CPUvsCPU)
         self.ai_x = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
         self.ai_o = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
+
+    def save_game(self, filename="savegame.json"):
+        data = {
+            'board': self.board.to_dict(),
+            'current_player': self.current_player,
+            'mode': self.mode,
+            'difficulty': self.difficulty,
+            'markers': self.markers
+        }
+        with open(filename, 'w') as f:
+            json.dump(data, f)
+
+    def load_game(self, filename="savegame.json"):
+        if not os.path.exists(filename):
+            return False
+        with open(filename, 'r') as f:
+            data = json.load(f)
+        self.board = Board.from_dict(data['board'])
+        self.current_player = data['current_player']
+        self.mode = data['mode']
+        self.difficulty = data['difficulty']
+        self.markers = data['markers']
+        # Re-init AI
+        self.ai_x = TicTacToeAI(difficulty=self.difficulty) if self.mode in ['PvE', 'CpuCpu'] else None
+        self.ai_o = TicTacToeAI(difficulty=self.difficulty) if self.mode in ['PvE', 'CpuCpu'] else None
+        return True
 
     def play(self):
         while True:
@@ -26,16 +64,15 @@ class GameSession:
             self.board.display_fixed(self.markers)
             
             if self.mode != 'CpuCpu':
-                print("\nCommands: [move 0-N] or ['u' to undo]")
+                print("\nCommands: [move 0-N], ['u' undo], ['s' save]")
             else:
                 print("\nSpectating CPU vs CPU...")
 
-            # Determine who moves
             is_human_turn = False
             if self.mode == 'PvP':
                 is_human_turn = True
             elif self.mode == 'PvE':
-                is_human_turn = (self.current_player == 'X') # Human is X, CPU is O
+                is_human_turn = (self.current_player == 'X')
             elif self.mode == 'CpuCpu':
                 is_human_turn = False
 
@@ -52,17 +89,20 @@ class GameSession:
                             print(f"{Colors.RED}Nothing to undo!{Colors.RESET}")
                             input("Press Enter to continue...")
                             continue
+                    elif user_input == 's':
+                        self.save_game()
+                        print(f"{Colors.GREEN}Game saved successfully!{Colors.RESET}")
+                        input("Press Enter to continue...")
+                        continue
                     
                     move = int(user_input)
                 except ValueError:
-                    print(f"{Colors.RED}Invalid input. Please enter a number or 'u'.{Colors.RESET}")
+                    print(f"{Colors.RED}Invalid input. Please enter a number, 'u', or 's'.{Colors.RESET}")
                     input("Press Enter to continue...")
                     continue
             else:
-                # CPU Turn
                 active_ai = self.ai_x if self.current_player == 'X' else self.ai_o
-                print(f"{Colors.CYAN}CPU ({self.current_player}) is thinking...{Colors.RESET}")
-                time.sleep(0.8) # Add pacing delay
+                thinking_spinner()
                 move = active_ai.get_move(self.board)
                 print(f"CPU chose position {Colors.BOLD}{move}{Colors.RESET}")
                 if self.mode != 'CpuCpu':
@@ -105,15 +145,15 @@ def main():
         print("1. Play Human vs Human (PvP)")
         print("2. Play Human vs CPU (PvE)")
         print("3. Play CPU vs CPU (Spectator)")
-        print("4. View Scores")
-        print("5. Quit")
+        print("4. Load Saved Game")
+        print("5. View Scores")
+        print("6. Quit")
         
         choice = input("\nSelect an option: ")
         
         if choice in ['1', '2', '3']:
             size_input = input("Enter board size (default 3): ")
             size = int(size_input) if size_input.isdigit() else 3
-            
             print("\nCustomize Markers:")
             mX = input("Marker for Player X [X]: ").strip() or 'X'
             mO = input("Marker for Player O [O]: ").strip() or 'O'
@@ -143,7 +183,6 @@ def main():
                 print("2. Medium")
                 print("3. Hard")
                 diff_choice = input("Select (1-3): ")
-                difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Harda') # Fixed typo in thought but applying here
                 difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
                 session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers)
                 result = session.play()
@@ -151,17 +190,30 @@ def main():
                 elif result == 'Draw': scores['Draw'] += 1
                 save_scores(scores)
         elif choice == '4':
+            # Attempt to load a game before starting a prompt session
+            session = GameSession() # Temp object to call loading’s logic
+            if session.load_game():
+                result = session.play()
+                if result and result != 'Draw': scores[result] += 1
+                elif result == 'Draw': 'Draw' # wait, this needs score tracking for the loaded game too
+                # Correcting score tracking:
+                if result == 'Draw': scores['Draw'] += 1
+                save_scores(scores)
+            else:
+                print(f"{Colors.RED}No saved game found!{Colors.RESET}")
+                input("Press Enter to continue...")
+        elif choice == '5':
             clear_screen()
             print(f"{Colors.BOLD}Current Scores:{Colors.RESET}")
             print(f"Player X: {scores['X']}")
             print(f"Player O: {scores['O']}")
             print(f"Draws:    {scores['Draw']}")
             input("\nPress Enter to return to menu...")
-        elif choice == '5':
+        elif choice == '6':
             print("Thanks for playing!")
             break
         else:
-            print(f"{Colors.RED}Invalid selection.{Colors.RESET}")
+            print(f"{Colors.RED}Invalid selection.{Colors.RESET}, try again.")
 
 if __name__ == "__main__":
     main()

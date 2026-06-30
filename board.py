@@ -78,3 +78,17 @@ class Board:
             return 'Draw'
         
         return None
+
+    def to_dict(self) -> dict:
+        return {
+            'size': self.size,
+            'cells': self.cells,
+            'history': self.history
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        board = cls(size=data['size'])
+        board.cells = data['cells']
+        board.history = data['history']
+        return board
