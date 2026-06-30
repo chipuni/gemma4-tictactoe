@@ -17,29 +17,56 @@ class Board:
 
     def display(self):
         print("\n")
-        cell_width = 3
+        # Using Unicode box-drawing characters for a professional look
+        top_left = "┌" 
+        top_right = "┐"
+        bottom_left = "└"
+        bottom_right = "┘"
+        horizontal = "───"
+        vertical = "│"
+        t_junction = "┬"
+        b_junction = "┴"
+        cross_junction = "┼"
+
+        # Adjust content width based on board size (numbers might take more space)
+        content_width = 3 if self.size < 10 else len(str(self.size * self.size - 1)) + 2
+        horizontal_line = "─" * content_width
+
         # Top border
-        top_border = "  " + "---+" * (self.size - 1) + "---"
-        print(top_border)
+        print(f"{top_left}{horizontal_line}{t_junction}" * (self.size - 1) + f"{top_left if False else '┌'}{horizontal_line}{top_right}")
+        # Fixed the top border logic slightly to be a single string
+        # print(f"{top_left}{horizontal_line}{t_junction}" * (self.size - 1) + f"{horizontal_line}{top_right}")
+        # Let's use a simpler cleaner approach:
         
-        for row in range(self.size):
-            row_cells = []
-            for col in range(self.size):
-                cell = self.cells[row * self.size + col]
+    def display_fixed(self):
+        print("\n")
+        w = 3 if self.size < 10 else len(str(self.size * self.size - 1)) + 2
+        h = "─" * w
+        
+        # Top
+        border_top = f"┌{'┬'.join([h]*self.size)}┐"
+        print(border_top)
+        
+        for r in range(self.size):
+            row_str = "│"
+            for c in range(self.size):
+                cell = self.cells[r * self.size + c]
                 if cell == 'X': 
-                    formatted = f"{Colors.BLUE}{cell}{Colors.RESET}"
+                    fmt = f"{Colors.BLUE}{cell}{Colors.RESET}"
                 elif cell == 'O': 
-                    formatted = f"{Colors.RED}{cell}{Colors.RESET}"
+                    fmt = f"{Colors.RED}{cell}{Colors.RESET}"
                 else: 
-                    # Use coordinates for empty cells in larger boards to help user
-                    formatted = " " if self.size == 3 else str(row * self.size + col)
-                row_cells.append(f" {formatted} ")
-            
-            print(f"|{'|'.join(row_cells)}|")
-            if row < self.size - 1:
-                print("  " + "---+" * (self.size - 1) + "---")
+                    fmt = " " if self.size == 3 else str(r * self.size + c)
+                
+                # Center the content in the width w
+                row_str += f" {fmt.center(w-2)} " + "│"
+            print(row_str)
+            if r < self.size - 1:
+                border_mid = f"├{'┼'.join([h]*self.size)}┤"
+                print(border_mid)
         
-        print(top_border + "\n")
+        border_bot = f"└{'┴'.join([h]*self.size)}┘"
+        print(border_bot + "\n")
 
     def make_move(self, position: int, player: str) -> bool:
         if 0 <= position < len(self.cells) and self.cells[position] == ' ':
@@ -48,22 +75,18 @@ class Board:
         return False
 
     def check_winner(self) -> Optional[str]:
-        # Check rows
         for row in range(self.size):
             start = row * self.size
             if all(self.cells[start + i] == self.cells[start] != ' ' for i in range(self.size)):
                 return self.cells[start]
 
-        # Check columns
         for col in range(self.size):
             if all(self.cells[col + i * self.size] == self.cells[col] != ' ' for i in range(self.size)):
                 return self.cells[col]
 
-        # Main diagonal
         if all(self.cells[i * (self.size + 1)] == self.cells[0] != ' ' for i in range(self.size)):
             return self.cells[0]
 
-        # Anti-diagonal
         if all(self.cells[(i + 1) * self.size - 1] == self.cells[self.size - 1] != ' ' for i in range(self.size)):
             return self.cells[self.size - 1]
 

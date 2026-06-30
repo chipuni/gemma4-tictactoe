@@ -18,7 +18,7 @@ class GameSession:
         while True:
             clear_screen()
             print(f"{Colors.BOLD}--- TIC TAC TOE {Colors.RESET} (Size: {self.board.size}x{self.board.size})")
-            self.board.display()
+            self.board.display_fixed()
             
             if self.current_player == 'X' or (self.mode == 'PvP' and self.current_player == 'O'):
                 try:
@@ -38,7 +38,7 @@ class GameSession:
                 if winner:
                     clear_screen()
                     print(f"{Colors.BOLD}--- GAME OVER ---{Colors.RESET}")
-                    self.board.display()
+                    self.board.display_fixed()
                     if winner == 'Draw':
                         print(f"{Colors.YELLOW}{Colors.BOLD}It's a draw!{Colors.RESET}")
                     else:
