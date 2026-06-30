@@ -1,5 +1,5 @@
 import unittest
-from tictactoe import Board
+from board import Board
 
 class TestTicTacToe(unittest.TestCase):
     def setUp(self):
