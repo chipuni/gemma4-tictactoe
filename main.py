@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from board import Board, Colors
 from ai import TicTacToeAI
 
@@ -13,7 +14,9 @@ class GameSession:
         self.mode = mode 
         self.difficulty = difficulty
         self.markers = markers if markers else {'X': 'X', 'O': 'O'}
-        self.ai = TicTacToeAI(difficulty=difficulty) if mode == 'PvE' else None
+        # Create separate AI instances for each player if needed (especially for CPUvsCPU)
+        self.ai_x = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
+        self.ai_o = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
 
     def play(self):
         while True:
@@ -22,16 +25,27 @@ class GameSession:
             print(f"Player X: {Colors.BLUE}{self.markers['X']}{Colors.RESET} | Player O: {Colors.RED}{self.markers['O']}{Colors.RESET}")
             self.board.display_fixed(self.markers)
             
-            print("\nCommands: [move 0-N] or ['u' to undo]")
-            
-            if self.current_player == 'X' or (self.mode == 'PvP' and self.current_player == 'O'):
+            if self.mode != 'CpuCpu':
+                print("\nCommands: [move 0-N] or ['u' to undo]")
+            else:
+                print("\nSpectating CPU vs CPU...")
+
+            # Determine who moves
+            is_human_turn = False
+            if self.mode == 'PvP':
+                is_human_turn = True
+            elif self.mode == 'PvE':
+                is_human_turn = (self.current_player == 'X') # Human is X, CPU is O
+            elif self.mode == 'CpuCpu':
+                is_human_turn = False
+
+            if is_human_turn:
                 try:
                     prompt = f"Player {Colors.BOLD}{self.current_player}{Colors.RESET}, enter move: "
                     user_input = input(prompt).strip().lower()
                     
                     if user_input == 'u':
                         if self.board.undo_move():
-                            # Swap back to the player who just had their move removed
                             self.current_player = 'O' if self.current_player == 'X' else 'X'
                             continue
                         else:
@@ -45,9 +59,14 @@ class GameSession:
                     input("Press Enter to continue...")
                     continue
             else:
-                print(f"{Colors.CYAN}CPU is thinking...{Colors.RESET}")
-                move = self.ai.get_move(self.board)
+                # CPU Turn
+                active_ai = self.ai_x if self.current_player == 'X' else self.ai_o
+                print(f"{Colors.CYAN}CPU ({self.current_player}) is thinking...{Colors.RESET}")
+                time.sleep(0.8) # Add pacing delay
+                move = active_ai.get_move(self.board)
                 print(f"CPU chose position {Colors.BOLD}{move}{Colors.RESET}")
+                if self.mode != 'CpuCpu':
+                    input("Press Enter to continue...")
 
             if self.board.make_move(move, self.current_player):
                 winner = self.board.check_winner()
@@ -85,12 +104,13 @@ def main():
         print(f"{Colors.BOLD}MAIN MENU{Colors.RESET}")
         print("1. Play Human vs Human (PvP)")
         print("2. Play Human vs CPU (PvE)")
-        print("3. View Scores")
-        print("4. Quit")
+        print("3. Play CPU vs CPU (Spectator)")
+        print("4. View Scores")
+        print("5. Quit")
         
         choice = input("\nSelect an option: ")
         
-        if choice == '1' or choice == '2':
+        if choice in ['1', '2', '3']:
             size_input = input("Enter board size (default 3): ")
             size = int(size_input) if size_input.isdigit() else 3
             
@@ -105,7 +125,7 @@ def main():
                 if result and result != 'Draw': scores[result] += 1
                 elif result == 'Draw': scores['Draw'] += 1
                 save_scores(scores)
-            else:
+            elif choice == '2':
                 print("\nChoose Difficulty:")
                 print("1. Easy")
                 print("2. Medium")
@@ -117,14 +137,27 @@ def main():
                 if result and result != 'Draw': scores[result] += 1
                 elif result == 'Draw': scores['Draw'] += 1
                 save_scores(scores)
-        elif choice == '3':
+            elif choice == '3':
+                print("\nChoose AI Difficulty:")
+                print("1. Easy")
+                print("2. Medium")
+                print("3. Hard")
+                diff_choice = input("Select (1-3): ")
+                difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Harda') # Fixed typo in thought but applying here
+                difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
+                session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers)
+                result = session.play()
+                if result and result != 'Draw': scores[result] += 1
+                elif result == 'Draw': scores['Draw'] += 1
+                save_scores(scores)
+        elif choice == '4':
             clear_screen()
             print(f"{Colors.BOLD}Current Scores:{Colors.RESET}")
             print(f"Player X: {scores['X']}")
             print(f"Player O: {scores['O']}")
             print(f"Draws:    {scores['Draw']}")
             input("\nPress Enter to return to menu...")
-        elif choice == '4':
+        elif choice == '5':
             print("Thanks for playing!")
             break
         else:
