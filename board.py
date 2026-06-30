@@ -14,36 +14,13 @@ class Board:
     def __init__(self, size: int = 3):
         self.size = size
         self.cells = [' ' for _ in range(size * size)]
+        self.history = [] # For undo functionality
 
-    def display(self):
-        print("\n")
-        # Using Unicode box-drawing characters for a professional look
-        top_left = "┌" 
-        top_right = "┐"
-        bottom_left = "└"
-        bottom_right = "┘"
-        horizontal = "───"
-        vertical = "│"
-        t_junction = "┬"
-        b_junction = "┴"
-        cross_junction = "┼"
-
-        # Adjust content width based on board size (numbers might take more space)
-        content_width = 3 if self.size < 10 else len(str(self.size * self.size - 1)) + 2
-        horizontal_line = "─" * content_width
-
-        # Top border
-        print(f"{top_left}{horizontal_line}{t_junction}" * (self.size - 1) + f"{top_left if False else '┌'}{horizontal_line}{top_right}")
-        # Fixed the top border logic slightly to be a single string
-        # print(f"{top_left}{horizontal_line}{t_junction}" * (self.size - 1) + f"{horizontal_line}{top_right}")
-        # Let's use a simpler cleaner approach:
-        
-    def display_fixed(self):
+    def display_fixed(self, markers: dict = {'X': 'X', 'O': 'O'}):
         print("\n")
         w = 3 if self.size < 10 else len(str(self.size * self.size - 1)) + 2
         h = "─" * w
         
-        # Top
         border_top = f"┌{'┬'.join([h]*self.size)}┐"
         print(border_top)
         
@@ -52,13 +29,12 @@ class Board:
             for c in range(self.size):
                 cell = self.cells[r * self.size + c]
                 if cell == 'X': 
-                    fmt = f"{Colors.BLUE}{cell}{Colors.RESET}"
+                    fmt = f"{Colors.BLUE}{markers.get('X', 'X')}{Colors.RESET}"
                 elif cell == 'O': 
-                    fmt = f"{Colors.RED}{cell}{Colors.RESET}"
+                    fmt = f"{Colors.RED}{markers.get('O', 'O')}{Colors.RESET}"
                 else: 
                     fmt = " " if self.size == 3 else str(r * self.size + c)
                 
-                # Center the content in the width w
                 row_str += f" {fmt.center(w-2)} " + "│"
             print(row_str)
             if r < self.size - 1:
@@ -70,9 +46,17 @@ class Board:
 
     def make_move(self, position: int, player: str) -> bool:
         if 0 <= position < len(self.cells) and self.cells[position] == ' ':
+            self.history.append((position, self.cells[position]))
             self.cells[position] = player
             return True
         return False
+
+    def undo_move(self):
+        if not self.history:
+            return False
+        pos, old_val = self.history.pop()
+        self.cells[pos] = old_val
+        return True
 
     def check_winner(self) -> Optional[str]:
         for row in range(self.size):

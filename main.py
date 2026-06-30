@@ -7,25 +7,41 @@ def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 class GameSession:
-    def __init__(self, mode='PvP', difficulty='Hard', size=3):
+    def __init__(self, mode='PvP', difficulty='Hard', size=3, markers=None):
         self.board = Board(size=size)
         self.current_player = 'X'
         self.mode = mode 
         self.difficulty = difficulty
+        self.markers = markers if markers else {'X': 'X', 'O': 'O'}
         self.ai = TicTacToeAI(difficulty=difficulty) if mode == 'PvE' else None
 
     def play(self):
         while True:
             clear_screen()
             print(f"{Colors.BOLD}--- TIC TAC TOE {Colors.RESET} (Size: {self.board.size}x{self.board.size})")
-            self.board.display_fixed()
+            print(f"Player X: {Colors.BLUE}{self.markers['X']}{Colors.RESET} | Player O: {Colors.RED}{self.markers['O']}{Colors.RESET}")
+            self.board.display_fixed(self.markers)
+            
+            print("\nCommands: [move 0-N] or ['u' to undo]")
             
             if self.current_player == 'X' or (self.mode == 'PvP' and self.current_player == 'O'):
                 try:
-                    prompt = f"Player {Colors.BOLD}{self.current_player}{Colors.RESET}, enter move (0-{len(self.board.cells)-1}): "
-                    move = int(input(prompt))
+                    prompt = f"Player {Colors.BOLD}{self.current_player}{Colors.RESET}, enter move: "
+                    user_input = input(prompt).strip().lower()
+                    
+                    if user_input == 'u':
+                        if self.board.undo_move():
+                            # Swap back to the player who just had their move removed
+                            self.current_player = 'O' if self.current_player == 'X' else 'X'
+                            continue
+                        else:
+                            print(f"{Colors.RED}Nothing to undo!{Colors.RESET}")
+                            input("Press Enter to continue...")
+                            continue
+                    
+                    move = int(user_input)
                 except ValueError:
-                    print(f"{Colors.RED}Invalid input. Please enter a number.{Colors.RESET}")
+                    print(f"{Colors.RED}Invalid input. Please enter a number or 'u'.{Colors.RESET}")
                     input("Press Enter to continue...")
                     continue
             else:
@@ -38,7 +54,7 @@ class GameSession:
                 if winner:
                     clear_screen()
                     print(f"{Colors.BOLD}--- GAME OVER ---{Colors.RESET}")
-                    self.board.display_fixed()
+                    self.board.display_fixed(self.markers)
                     if winner == 'Draw':
                         print(f"{Colors.YELLOW}{Colors.BOLD}It's a draw!{Colors.RESET}")
                     else:
@@ -74,30 +90,33 @@ def main():
         
         choice = input("\nSelect an option: ")
         
-        if choice == '1':
-            size_input = input("Enter board size (default 3): ")
-            size = int(size_input) if size_input.isdigit() else 3
-            session = GameSession(mode='PvP', size=size)
-            result = session.play()
-            if result and result != 'Draw': scores[result] += 1
-            elif result == 'Draw': scores['Draw'] += 1
-            save_scores(scores)
-        elif choice == '2':
+        if choice == '1' or choice == '2':
             size_input = input("Enter board size (default 3): ")
             size = int(size_input) if size_input.isdigit() else 3
             
-            print("\nChoose Difficulty:")
-            print("1. Easy")
-            print("2. Medium")
-            print("3. Hard")
-            diff_choice = input("Select (1-3): ")
-            difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
-            
-            session = GameSession(mode='PvE', difficulty=difficulty, size=size)
-            result = session.play()
-            if result and result != 'Draw': scores[result] += 1
-            elif result == 'Draw': scores['Draw'] += 1
-            save_scores(scores)
+            print("\nCustomize Markers:")
+            mX = input("Marker for Player X [X]: ").strip() or 'X'
+            mO = input("Marker for Player O [O]: ").strip() or 'O'
+            markers = {'X': mX, 'O': mO}
+
+            if choice == '1':
+                session = GameSession(mode='PvP', size=size, markers=markers)
+                result = session.play()
+                if result and result != 'Draw': scores[result] += 1
+                elif result == 'Draw': scores['Draw'] += 1
+                save_scores(scores)
+            else:
+                print("\nChoose Difficulty:")
+                print("1. Easy")
+                print("2. Medium")
+                print("3. Hard")
+                diff_choice = input("Select (1-3): ")
+                difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
+                session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers)
+                result = session.play()
+                if result and result != 'Draw': scores[result] += 1
+                elif result == 'Draw': scores['Draw'] += 1
+                save_scores(scores)
         elif choice == '3':
             clear_screen()
             print(f"{Colors.BOLD}Current Scores:{Colors.RESET}")
