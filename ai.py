@@ -87,15 +87,24 @@ class TicTacToeAI:
             return min_eval
 
     def _evaluate_board(self, board: Board) -> int:
+        # Improved Heuristic: Explicitly prioritize lines near completion
         score = 0
         lines = self._get_all_winning_lines(board)
         for line in lines:
             o_count = sum(1 for i in line if board.cells[i] == 'O')
             x_count = sum(1 for i in line if board.cells[i] == 'X')
+            empty_count = len(line) - o_count - x_count
+            
             if o_count > 0 and x_count == 0:
-                score += (10 ** o_count)
+                # High value for nearly complete lines
+                weight = 10 ** (o_count + 1) if empty_count > 0 else 50
+                score += weight
             elif x_count > 0 and o_count == 0:
-                score -= (10 ** x_count)
+                weight = 10 ** (x_count + 1) if empty_count > 0 else 50
+                score -= weight
+            elif o_count == 0 and x_count == 0:
+                # Slight preference for lines that are still open
+                score += 1
         return score
 
     def _get_all_winning_lines(self, board: Board) -> List[List[int]]:
