@@ -1,2 +1,3 @@
-# gemma4-tictactoe
-Asking gemma4 to create the Best Possible tic-tac-toe game.
+# Tic Tac Toe
+
+Please create a Tic-Tac-Toe game.
