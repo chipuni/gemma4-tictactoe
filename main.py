@@ -21,11 +21,12 @@ def thinking_spinner(duration=1.0):
     print("\n")
 
 class GameSession:
-    def __init__(self, mode='PvP', difficulty='Hard', size=3, markers=None):
+    def __init__(self, mode='PvP', difficulty='Hard', size=3, markers=None, cpu_speed=1.0):
         self.board = Board(size=size)
         self.current_player = 'X'
         self.mode = mode 
         self.difficulty = difficulty
+        self.cpu_speed = cpu_speed # Seconds for thinking spinner
         self.markers = markers if markers else {'X': 'X', 'O': 'O'}
         self.ai_x = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
         self.ai_o = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
@@ -37,7 +38,8 @@ class GameSession:
             'current_player': self.current_player,
             'mode': self.mode,
             'difficulty': self.difficulty,
-            'markers': self.markers
+            'markers': self.markers,
+            'cpu_speed': self.cpu_speed
         }
         with open(filename, 'w') as f:
             json.dump(data, f)
@@ -52,6 +54,7 @@ class GameSession:
         self.mode = data['mode']
         self.difficulty = data['difficulty']
         self.markers = data['markers']
+        self.cpu_speed = data.get('cpu_speed', 1.0)
         self.ai_x = TicTacToeAI(difficulty=self.difficulty) if self.mode in ['PvE', 'CpuCpu'] else None
         self.ai_o = TicTacToeAI(difficulty=self.difficulty) if self.mode in ['PvE', 'CpuCpu'] else None
         return True
@@ -110,7 +113,7 @@ class GameSession:
                     continue
             else:
                 active_ai = self.ai_x if self.current_player == 'X' else self.ai_o
-                thinking_spinner()
+                thinking_spinner(self.cpu_speed)
                 move = active_ai.get_move(self.board)
                 print(f"CPU chose position {Colors.BOLD}{move}{Colors.RESET}")
                 if self.mode != 'CpuCpu':
@@ -157,7 +160,8 @@ def main():
         print("3. Play CPU vs CPU (Spectator)")
         print("4. Load Saved Game")
         print("5. View Scores")
-        print("6. Quit")
+        print("6. Reset Statistics")
+        print("7. Quit")
         
         choice = input("\nSelect an option: ")
         
@@ -184,7 +188,9 @@ def main():
                 print("3. Hard")
                 diff_choice = input("Select (1-3): ")
                 difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
-                session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers)
+                speed_input = input("AI thinking speed (seconds, default 1.0): ")
+                speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else 1.0
+                session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
                 result = session.play()
                 if result:
                     scores['Total'] += 1
@@ -198,19 +204,15 @@ def main():
                 print("3. Hard")
                 diff_choice = input("Select (1-3): ")
                 difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
-                session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers)
+                speed_input = input("AI thinking speed (seconds, default 1.0): ")
+                speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else 1.0
+                session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
                 result = session.play()
                 if result:
                     scores['Total'] += 1
-                    if result != 'C-Draw' if False else 'Draw': scores['Draw'] += 1 # wait dummy check
-                    # Correcting the lala part again’s score tracking for CpuCpu
-                    if result == 'Draw': scores['Draw'] += 1
-                    elif result: scores[result] += 1
-                    scores['Total'] += 1 # Wait, did I add Total twice? let me just fix it.
+                    if result != 'Draw': scores[result] += 1
+                    else: scores['Draw'] += 1
                     save_scores(scores)
-            else:
-                # This part is handled by the choice loop
-                pass
         elif choice == '4':
             session = GameSession() 
             if session.load_game():
@@ -239,7 +241,15 @@ def main():
                 print("No games played yet.")
             input("\nPress Enter to return to menu...")
         elif choice == '6':
-        # This is the la lala part. I'll just quit.
+            confirm = input("Are you sure you want to reset all scores? (y/n): ")
+            if confirm.lower() == 'y':
+                scores = {'X': 0, 'O': 0, 'Draw': 0, 'Total': 0}
+                save_scores(scores)
+                print(f"{Colors.GREEN}Statistics reset successfully!{Colors.RESET}")
+            else:
+                print("Reset cancelled.")
+            input("\nPress Enter to return to menu...")
+        elif choice == '7':
             print("Thanks for playing!")
             break
         else:
