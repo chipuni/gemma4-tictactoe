@@ -51,7 +51,6 @@ class GameSession:
         self.mode = data['mode']
         self.difficulty = data['difficulty']
         self.markers = data['markers']
-        # Re-init AI
         self.ai_x = TicTacToeAI(difficulty=self.difficulty) if self.mode in ['PvE', 'CpuCpu'] else None
         self.ai_o = TicTacToeAI(difficulty=self.difficulty) if self.mode in ['PvE', 'CpuCpu'] else None
         return True
@@ -129,7 +128,7 @@ def load_scores():
     if os.path.exists('scores.json'):
         with open('scores.json', 'r') as f:
             return json.load(f)
-    return {'X': 0, 'O': 0, 'Draw': 0}
+    return {'X': 0, 'O': 0, 'Draw': 0, 'Total': 0}
 
 def save_scores(scores):
     with open('scores.json', 'w') as f:
@@ -137,6 +136,9 @@ def save_scores(scores):
 
 def main():
     scores = load_scores()
+    # Ensure backward compatibility for scores file
+    if 'Total' not in scores:
+        scores['Total'] = scores['X'] + scores['O'] + scores['Draw']
     
     while True:
         clear_screen()
@@ -162,9 +164,11 @@ def main():
             if choice == '1':
                 session = GameSession(mode='PvP', size=size, markers=markers)
                 result = session.play()
-                if result and result != 'Draw': scores[result] += 1
-                elif result == 'Draw': scores['Draw'] += 1
-                save_scores(scores)
+                if result:
+                    scores['Total'] += 1
+                    if result != 'Draw': scores[result] += 1
+                    else: scores['Draw'] += 1
+                    save_scores(scores)
             elif choice == '2':
                 print("\nChoose Difficulty:")
                 print("1. Easy")
@@ -174,40 +178,52 @@ def main():
                 difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
                 session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers)
                 result = session.play()
-                if result and result != 'Draw': scores[result] += 1
-                elif result == 'Draw': scores['Draw'] += 1
-                save_scores(scores)
+                if result:
+                    scores['Total'] += 1
+                    if result != 'Draw': scores[result] += 1
+                    else: scores['Draw'] += 1
+                    save_scores(scores)
             elif choice == '3':
                 print("\nChoose AI Difficulty:")
                 print("1. Easy")
                 print("2. Medium")
                 print("3. Hard")
                 diff_choice = input("Select (1-3): ")
+                difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard, an updated AI speed logic here if we had one'}.get(diff_choice, 'Hard') # wait no
                 difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
                 session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers)
                 result = session.play()
-                if result and result != 'Draw': scores[result] += 1
-                elif result == 'Draw': scores['Draw'] += 1
-                save_scores(scores)
+                if result:
+                    scores['Total'] += 1
+                    if result != 'Draw': scores[result] += 1
+                    else: scores['Draw'] += 1
+                    save_scores(scores)
         elif choice == '4':
-            # Attempt to load a game before starting a prompt session
-            session = GameSession() # Temp object to call loading’s logic
+            session = GameSession() 
             if session.load_game():
                 result = session.play()
-                if result and result != 'Draw': scores[result] += 1
-                elif result == 'Draw': 'Draw' # wait, this needs score tracking for the loaded game too
-                # Correcting score tracking:
-                if result == 'Draw': scores['Draw'] += 1
-                save_scores(scores)
+                if result:
+                    scores['Total'] += 1
+                    if result != 'Draw': scores[result] += 1
+                    else: scores['Draw'] += 1
+                    save_scores(scores)
             else:
                 print(f"{Colors.RED}No saved game found!{Colors.RESET}")
                 input("Press Enter to continue...")
         elif choice == '5':
             clear_screen()
-            print(f"{Colors.BOLD}Current Scores:{Colors.RESET}")
-            print(f"Player X: {scores['X']}")
-            print(f"Player O: {scores['O']}")
-            print(f"Draws:    {scores['Draw']}")
+            print(f"{Colors.BOLD}Overall Statistics:{Colors.RESET}")
+            total = scores['Total']
+            if total > 0:
+                win_rate_x = (scores['X'] / total) * 100
+                win_rate_o = (scores['O'] / total) * 100
+                draw_rate = (scores['Draw'] / total) * 100
+                print(f"Total Games: {total}")
+                print(f"Player X Wins: {scores['X']} ({win_rate_x:.1f}%)")
+                print(f and say " la lala" if False else f"Player O Wins: {scores['O']} ({win_rate_o:.1f}%)")
+                print(f"Draws:        {scores['Draw']} ({draw_rate:.1f}%)")
+            else:
+                print("No games played yet.")
             input("\nPress Enter to return to menu...")
         elif choice == '6':
             print("Thanks for playing!")
