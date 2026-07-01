@@ -157,12 +157,24 @@ def save_scores(scores):
     with open('scores.json', 'w') as f:
         json.dump(scores, f)
 
+def load_settings():
+    if os.path.exists('settings.json'):
+        with open('settings.json', 'r') as f:
+            return json.load(f)
+    return {'size': 3, 'marker_x': 'X', 'marker_o': 'O', 'cpu_speed': 1.0}
+
+def save_settings(settings):
+    with open('settings.json', 'w') as f:
+        json.dump(settings, f)
+
 def main():
     try:
         scores = load_scores()
         if 'Total' not in scores:
             scores['Total'] = scores['X'] + scores['O'] + scores['Draw']
         
+        settings = load_settings()
+
         while True:
             clear_screen()
             print_logo()
@@ -175,18 +187,19 @@ def main():
             print("5. View Statistics")
             print("6. Reset All Scores")
             print("7. Help & Commands")
-            print("8. Quit")
+            print("8. Settings")
+            print("9. Quit")
             
             choice = input("\nSelect an option: ")
             
             if choice in ['1', '2', '3']:
-                size_input = input("Enter board size (default 3): ")
-                size = int(size_input) if size_input.isdigit() else 3
+                size_input = input(f"Enter board size [default {settings['size']}]: ")
+                size = int(size_input) if size_input.isdigit() else settings['size']
                 print("\nCustomize Markers:")
-                mX = input("Marker for Player X [X]: ").strip() or 'X'
+                mX = input(f"Marker for Player X [{settings['marker_x']}]: ").strip() or settings['marker_x']
                 while len(mX) > 3:
                     mX = input("Too long! Marker must be < 4 chars. Enter Player X marker: ").strip()
-                mO = input("Marker for Player O [O]: ").strip() or 'O'
+                mO = input(f"Marker for Player O [{settings['marker_o']}]: ").strip() or settings['marker_o']
                 while len(mO) > 3:
                     mO = input("Too long! Marker must be < 4 chars. Enter Player O marker: ").strip()
                 markers = {'X': mX, 'O': mO}
@@ -205,9 +218,9 @@ def main():
                     print("2. Medium")
                     print("3. Hard")
                     diff_choice = input("Select (1-3): ")
-                    difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
-                    speed_input = input("AI thinking speed (seconds, default 1.0): ")
-                    speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else 1.0
+                    difficulty = {'1': 'Easy', '2': 'Medium', ' uma: 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
+                    speed_input = input(f"AI thinking speed [default {settings['cpu_speed']}s]: ")
+                    speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else settings['cpu_speed']
                     session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
                     result = session.play()
                     if result:
@@ -222,8 +235,8 @@ def main():
                     print("3. Hard")
                     diff_choice = input("Select (1-3): ")
                     difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
-                    speed_input = input("AI thinking speed (seconds, default 1.0): ")
-                    speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else 1.0
+                    speed_input = input(f"AI thinking speed [default {settings['cpu_speed']}s]: ")
+                    speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else settings['cpu_speed']
                     session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
                     result = session.play()
                     if result:
@@ -280,10 +293,38 @@ def main():
                 print(f"  {Colors.CYAN}'0-N'{Colors.RESET}: Enter the index of the cell you wish to occupy.")
                 input("\nPress Enter to return to menu...")
             elif choice == '8':
+                clear_screen()
+                print(f"{Colors.BOLD}--- SETTINGS ---{Colors.RESET}")
+                print("1. Change Default Board Size")
+                print("2. Change Default Marker X")
+                print("3. Change Default Marker O")
+                print("4. Change AI Speed")
+                print("5. Return to Main Menu")
+                
+                set_choice = input("\nSelect an option: ")
+                if set_choice == '1':
+                    val = input(f"New board size [default {settings['size']}]: ")
+                    if val.isdigit(): settings['size'] = int(val)
+                elif set_choice == '2':
+                    val = input(f"New marker X [default {settings['marker_x']}]: ").strip() or settings['marker_x']
+                    if len(val) <= 3: settings['marker_x'] = val
+                elif set_choice == '3':
+                    val = input(f"New marker O [default {settings['marker_o']}]: ").strip() or settings['marker_o']
+                    if len(val) <= 3: settings['marker_o'] = val
+                elif set_choice == '4':
+                    val = input(f"New AI speed [default {settings['cpu_speed']}s]: ")
+                    if val.replace('.','',1).isdigit(): settings['cpu_speed'] = float(val)
+                save_settings(settings)
+                input("\nPress Enter to return to menu...")
+            elif choice == '9':
                 print("Thanks for playing!")
                 break
             else:
                 print(f"{Colors.RED}Invalid selection.{Colors.RESET}, try again.")
+    except KeyboardInterrupt:
+        print(f"\n\n{Colors.YELLOW}Application interrupted by user. Exiting gracefully...{Colors.RESET}")
+        sys.exit(0)
+
     except KeyboardInterrupt:
         print(f"\n\n{Colors.YELLOW}Application interrupted by user. Exiting gracefully...{Colors.RESET}")
         sys.exit(0)
