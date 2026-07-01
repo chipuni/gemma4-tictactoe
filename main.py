@@ -20,13 +20,24 @@ def thinking_spinner(duration=1.0):
         i += 1
     print("\n")
 
+def print_logo():
+    logo = f"""
+{Colors.CYAN}  _   _  _   _  _____  _   _  _____  _____  _   _ 
+ | \ | || | | ||_   _|| | | || {Colors.RESET}Tic{Colors.CYAN} Tac Toe{Colors.RESET}
+ |  \| || | | |  | |  | | | | {Colors.RESET}v2.0{Colors.CYAN} 
+ | . ` || | | |  | |  | |_| | {Colors.RESET}Professional Edition{Colors.CYAN}
+ | |\  || |_| |  | |  |  _  | 
+ |_| \_||___|_|  |_|  |_| |_| {Colors.RESET}
+    """
+    print(logo)
+
 class GameSession:
     def __init__(self, mode='PvP', difficulty='Hard', size=3, markers=None, cpu_speed=1.0):
         self.board = Board(size=size)
         self.current_player = 'X'
         self.mode = mode 
         self.difficulty = difficulty
-        self.cpu_speed = cpu_speed # Seconds for thinking spinner
+        self.cpu_speed = cpu_speed
         self.markers = markers if markers else {'X': 'X', 'O': 'O'}
         self.ai_x = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
         self.ai_o = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
@@ -153,15 +164,17 @@ def main():
     
     while True:
         clear_screen()
-        print("\n" + "="*30)
+        print_logo()
+        print("\n" + "="*40)
         print(f"{Colors.BOLD}MAIN MENU{Colors.RESET}")
         print("1. Play Human vs Human (PvP)")
-        print("2. Play Human vs CPU (PvE")
+        print("2. Play Human vs CPU (PvE)")
         print("3. Play CPU vs CPU (Spectator)")
         print("4. Load Saved Game")
-        print("5. View Scores")
-        print("6. Reset Statistics")
-        print("7. Quit")
+        print("5. View Statistics")
+        print("6. Reset All Scores")
+        print("7. Help & Commands")
+        print("8. Quit")
         
         choice = input("\nSelect an option: ")
         
@@ -170,7 +183,11 @@ def main():
             size = int(size_input) if size_input.isdigit() else 3
             print("\nCustomize Markers:")
             mX = input("Marker for Player X [X]: ").strip() or 'X'
+            while len(mX) > 3:
+                mX = input("Too long! Marker must be < 4 chars. Enter Player X marker: ").strip()
             mO = input("Marker for Player O [O]: ").strip() or 'O'
+            while len(mO) > 3:
+                mO = input("Too long! Marker must be < 4 chars. Enter Player O marker: ").strip()
             markers = {'X': mX, 'O': mO}
 
             if choice == '1':
@@ -250,6 +267,18 @@ def main():
                 print("Reset cancelled.")
             input("\nPress Enter to return to menu...")
         elif choice == '7':
+            clear_screen()
+            print(f"{Colors.BOLD}--- HELP & COMMANDS ---{Colors.RESET}")
+            print("\nGame Rules:")
+            print("- Align N markers horizontally, vertically, or diagonally to win.")
+            print("- The board size (N) is selectable at the start of a match.")
+            print("\nIn-Game Commands:")
+            print(f"  {Colors.CYAN}'u'{Colors.RESET} : Undo the last move made.")
+            print(f"  {Colors.CYAN}'s'{Colors.RESET} : Save current game state to disk.")
+            print(f"  {Colors.CYAN}'h'{Colors.RESET} : Request a best-move hint from the AI.")
+            print(f"  {Colors.CYAN}'0-N'{Colors.RESET}: Enter the index of the cell you wish to occupy.")
+            input("\nPress Enter to return to menu...")
+        elif choice == '8':
             print("Thanks for playing!")
             break
         else:
