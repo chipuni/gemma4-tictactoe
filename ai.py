@@ -18,12 +18,23 @@ class TicTacToeAI:
         else: # Hard
             return self._best_move(board)
 
+    def get_suggested_move(self, board: Board) -> int:
+        """Provides the optimal move for a human player (X)."""
+        # We simulate as if X is playing and wants to maximize their own score.
+        # In our minimax, 'O' is usually maximizing. 
+        # For the hint, we can just use _best_move but adjust logic if needed.
+        # Since get_move handles 'O', let's create a generic best move.
+        return self._get_optimal_move(board, player='X')
+
     def _random_move(self, board: Board) -> int:
         available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
         return random.choice(available_moves) if available_moves else -1
 
     def _best_move(self, board: Board) -> int:
-        best_score = -float('inf')
+        return self._get_optimal_move(board, player='O')
+
+    def _get_optimal_move(self, board: Board, player: str) -> int:
+        best_score = -float('inf') if player == 'O' else float('inf')
         best_move = -1
         search_depth = 6 if board.size > 3 else 9
         available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
@@ -33,12 +44,20 @@ class TicTacToeAI:
         sorted_moves = sorted(available_moves, key=lambda m: abs(m - center))
 
         for move in sorted_moves:
-            board.cells[move] = 'O'
-            score = self._minimax(board, 0, False, -float('inf'), float('inf'), search_depth)
+            board.cells[move] = player
+            # the is_maximizing argument should be True if the next mover's turn that we are simulating
+            # But simpler: just use minimax and check relative to current player.
+            score = self._minimax(board, 0, player != 'O', -float('inf'), float('inf'), search_depth)
             board.cells[move] = ' '
-            if score > best_score:
-                best_score = score
-                best_move = move
+            
+            if player == 'O':
+                if score > best_score:
+                    best_score = score
+                    best_move = move
+            else: # Player X
+                if score < best_score:
+                    best_score = score
+                    best_move = move
         
         return best_move if best_move != -1 else self._random_move(board)
 
@@ -87,23 +106,19 @@ class TicTacToeAI:
             return min_eval
 
     def _evaluate_board(self, board: Board) -> int:
-        # Improved Heuristic: Explicitly prioritize lines near completion
         score = 0
         lines = self._get_all_winning_lines(board)
         for line in lines:
             o_count = sum(1 for i in line if board.cells[i] == 'O')
             x_count = sum(1 for i in line if board.cells[i] == 'X')
             empty_count = len(line) - o_count - x_count
-            
             if o_count > 0 and x_count == 0:
-                # High value for nearly complete lines
                 weight = 10 ** (o_count + 1) if empty_count > 0 else 50
                 score += weight
             elif x_count > 0 and o_count == 0:
                 weight = 10 ** (x_count + 1) if empty_count > 0 else 50
                 score -= weight
             elif o_count == 0 and x_count == 0:
-                # Slight preference for lines that are still open
                 score += 1
         return score
 
