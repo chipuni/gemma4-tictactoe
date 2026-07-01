@@ -158,131 +158,135 @@ def save_scores(scores):
         json.dump(scores, f)
 
 def main():
-    scores = load_scores()
-    if 'Total' not in scores:
-        scores['Total'] = scores['X'] + scores['O'] + scores['Draw']
-    
-    while True:
-        clear_screen()
-        print_logo()
-        print("\n" + "="*40)
-        print(f"{Colors.BOLD}MAIN MENU{Colors.RESET}")
-        print("1. Play Human vs Human (PvP)")
-        print("2. Play Human vs CPU (PvE)")
-        print("3. Play CPU vs CPU (Spectator)")
-        print("4. Load Saved Game")
-        print("5. View Statistics")
-        print("6. Reset All Scores")
-        print("7. Help & Commands")
-        print("8. Quit")
+    try:
+        scores = load_scores()
+        if 'Total' not in scores:
+            scores['Total'] = scores['X'] + scores['O'] + scores['Draw']
         
-        choice = input("\nSelect an option: ")
+        while True:
+            clear_screen()
+            print_logo()
+            print("\n" + "="*40)
+            print(f"{Colors.BOLD}MAIN MENU{Colors.RESET}")
+            print("1. Play Human vs Human (PvP)")
+            print("2. Play Human vs CPU (PvE)")
+            print("3. Play CPU vs CPU (Spectator)")
+            print("4. Load Saved Game")
+            print("5. View Statistics")
+            print("6. Reset All Scores")
+            print("7. Help & Commands")
+            print("8. Quit")
+            
+            choice = input("\nSelect an option: ")
+            
+            if choice in ['1', '2', '3']:
+                size_input = input("Enter board size (default 3): ")
+                size = int(size_input) if size_input.isdigit() else 3
+                print("\nCustomize Markers:")
+                mX = input("Marker for Player X [X]: ").strip() or 'X'
+                while len(mX) > 3:
+                    mX = input("Too long! Marker must be < 4 chars. Enter Player X marker: ").strip()
+                mO = input("Marker for Player O [O]: ").strip() or 'O'
+                while len(mO) > 3:
+                    mO = input("Too long! Marker must be < 4 chars. Enter Player O marker: ").strip()
+                markers = {'X': mX, 'O': mO}
         
-        if choice in ['1', '2', '3']:
-            size_input = input("Enter board size (default 3): ")
-            size = int(size_input) if size_input.isdigit() else 3
-            print("\nCustomize Markers:")
-            mX = input("Marker for Player X [X]: ").strip() or 'X'
-            while len(mX) > 3:
-                mX = input("Too long! Marker must be < 4 chars. Enter Player X marker: ").strip()
-            mO = input("Marker for Player O [O]: ").strip() or 'O'
-            while len(mO) > 3:
-                mO = input("Too long! Marker must be < 4 chars. Enter Player O marker: ").strip()
-            markers = {'X': mX, 'O': mO}
-
-            if choice == '1':
-                session = GameSession(mode='PvP', size=size, markers=markers)
-                result = session.play()
-                if result:
-                    scores['Total'] += 1
-                    if result != 'Draw': scores[result] += 1
-                    else: scores['Draw'] += 1
+                if choice == '1':
+                    session = GameSession(mode='PvP', size=size, markers=markers)
+                    result = session.play()
+                    if result:
+                        scores['Total'] += 1
+                        if result != 'Draw': scores[result] += 1
+                        else: scores['Draw'] += 1
+                        save_scores(scores)
+                elif choice == '2':
+                    print("\nChoose Difficulty:")
+                    print("1. Easy")
+                    print("2. Medium")
+                    print("3. Hard")
+                    diff_choice = input("Select (1-3): ")
+                    difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
+                    speed_input = input("AI thinking speed (seconds, default 1.0): ")
+                    speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else 1.0
+                    session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
+                    result = session.play()
+                    if result:
+                        scores['Total'] += 1
+                        if result != 'Draw': scores[result] += 1
+                        else: scores['Draw'] += 1
+                        save_scores(scores)
+                elif choice == '3':
+                    print("\nChoose AI Difficulty:")
+                    print("1. Easy")
+                    print("2. Medium")
+                    print("3. Hard")
+                    diff_choice = input("Select (1-3): ")
+                    difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
+                    speed_input = input("AI thinking speed (seconds, default 1.0): ")
+                    speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else 1.0
+                    session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
+                    result = session.play()
+                    if result:
+                        scores['Total'] += 1
+                        if result != 'Draw': scores[result] += 1
+                        else: scores['Draw'] += 1
+                        save_scores(scores)
+            elif choice == '4':
+                session = GameSession() 
+                if session.load_game():
+                    result = session.play()
+                    if result:
+                        scores['Total'] += 1
+                        if result != 'Draw': scores[result] += 1
+                        else: scores['Draw'] += 1
+                        save_scores(scores)
+                else:
+                    print(f"{Colors.RED}No saved game found!{Colors.RESET}")
+                    input("Press Enter to continue...")
+            elif choice == '5':
+                clear_screen()
+                print(f"{Colors.BOLD}Overall Statistics:{Colors.RESET}")
+                total = scores['Total']
+                if total > 0:
+                    win_rate_x = (scores['X'] / total) * 100
+                    win_rate_o = (scores['O'] / total) * 100
+                    draw_rate = (scores['Draw'] / total) * 100
+                    print(f"Total Games: {total}")
+                    print(f"Player X Wins: {scores['X']} ({win_rate_x:.1f}%)")
+                    print(f"Player O Wins: {scores['O']} ({win_rate_o:.1f}%)")
+                    print(f"Draws:        {scores['Draw']} ({draw_rate:.1f}%)")
+                else:
+                    print("No games played yet.")
+                input("\nPress Enter to return to menu...")
+            elif choice == '6':
+                confirm = input("Are you sure you want to reset all scores? (y/n): ")
+                if confirm.lower() == 'y':
+                    scores = {'X': 0, 'O': 0, 'Draw': 0, 'Total': 0}
                     save_scores(scores)
-            elif choice == '2':
-                print("\nChoose Difficulty:")
-                print("1. Easy")
-                print("2. Medium")
-                print("3. Hard")
-                diff_choice = input("Select (1-3): ")
-                difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
-                speed_input = input("AI thinking speed (seconds, default 1.0): ")
-                speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else 1.0
-                session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
-                result = session.play()
-                if result:
-                    scores['Total'] += 1
-                    if result != 'Draw': scores[result] += 1
-                    else: scores['Draw'] += 1
-                    save_scores(scores)
-            elif choice == '3':
-                print("\nChoose AI Difficulty:")
-                print("1. Easy")
-                print("2. Medium")
-                print("3. Hard")
-                diff_choice = input("Select (1-3): ")
-                difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
-                speed_input = input("AI thinking speed (seconds, default 1.0): ")
-                speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else 1.0
-                session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
-                result = session.play()
-                if result:
-                    scores['Total'] += 1
-                    if result != 'Draw': scores[result] += 1
-                    else: scores['Draw'] += 1
-                    save_scores(scores)
-        elif choice == '4':
-            session = GameSession() 
-            if session.load_game():
-                result = session.play()
-                if result:
-                    scores['Total'] += 1
-                    if result != 'Draw': scores[result] += 1
-                    else: scores['Draw'] += 1
-                    save_scores(scores)
+                    print(f"{Colors.GREEN}Statistics reset successfully!{Colors.RESET}")
+                else:
+                    print("Reset cancelled.")
+                input("\nPress Enter to return to menu...")
+            elif choice == '7':
+                clear_screen()
+                print(f"{Colors.BOLD}--- HELP & COMMANDS ---{Colors.RESET}")
+                print("\nGame Rules:")
+                print("- Align N markers horizontally, vertically, or diagonally to win.")
+                print("- The board size (N) is selectable at the start of a match.")
+                print("\nIn-Game Commands:")
+                print(f"  {Colors.CYAN}'u'{Colors.RESET} : Undo the last move made.")
+                print(f"  {Colors.CYAN}'s'{Colors.RESET} : Save current game state to disk.")
+                print(f"  {Colors.CYAN}'h'{Colors.RESET} : Request a best-move hint from the AI.")
+                print(f"  {Colors.CYAN}'0-N'{Colors.RESET}: Enter the index of the cell you wish to occupy.")
+                input("\nPress Enter to return to menu...")
+            elif choice == '8':
+                print("Thanks for playing!")
+                break
             else:
-                print(f"{Colors.RED}No saved game found!{Colors.RESET}")
-                input("Press Enter to continue...")
-        elif choice == '5':
-            clear_screen()
-            print(f"{Colors.BOLD}Overall Statistics:{Colors.RESET}")
-            total = scores['Total']
-            if total > 0:
-                win_rate_x = (scores['X'] / total) * 100
-                win_rate_o = (scores['O'] / total) * 100
-                draw_rate = (scores['Draw'] / total) * 100
-                print(f"Total Games: {total}")
-                print(f"Player X Wins: {scores['X']} ({win_rate_x:.1f}%)")
-                print(f"Player O Wins: {scores['O']} ({win_rate_o:.1f}%)")
-                print(f"Draws:        {scores['Draw']} ({draw_rate:.1f}%)")
-            else:
-                print("No games played yet.")
-            input("\nPress Enter to return to menu...")
-        elif choice == '6':
-            confirm = input("Are you sure you want to reset all scores? (y/n): ")
-            if confirm.lower() == 'y':
-                scores = {'X': 0, 'O': 0, 'Draw': 0, 'Total': 0}
-                save_scores(scores)
-                print(f"{Colors.GREEN}Statistics reset successfully!{Colors.RESET}")
-            else:
-                print("Reset cancelled.")
-            input("\nPress Enter to return to menu...")
-        elif choice == '7':
-            clear_screen()
-            print(f"{Colors.BOLD}--- HELP & COMMANDS ---{Colors.RESET}")
-            print("\nGame Rules:")
-            print("- Align N markers horizontally, vertically, or diagonally to win.")
-            print("- The board size (N) is selectable at the start of a match.")
-            print("\nIn-Game Commands:")
-            print(f"  {Colors.CYAN}'u'{Colors.RESET} : Undo the last move made.")
-            print(f"  {Colors.CYAN}'s'{Colors.RESET} : Save current game state to disk.")
-            print(f"  {Colors.CYAN}'h'{Colors.RESET} : Request a best-move hint from the AI.")
-            print(f"  {Colors.CYAN}'0-N'{Colors.RESET}: Enter the index of the cell you wish to occupy.")
-            input("\nPress Enter to return to menu...")
-        elif choice == '8':
-            print("Thanks for playing!")
-            break
-        else:
-            print(f"{Colors.RED}Invalid selection.{Colors.RESET}, try again.")
+                print(f"{Colors.RED}Invalid selection.{Colors.RESET}, try again.")
+    except KeyboardInterrupt:
+        print(f"\n\n{Colors.YELLOW}Application interrupted by user. Exiting gracefully...{Colors.RESET}")
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
