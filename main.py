@@ -95,7 +95,10 @@ class GameSession:
                     prompt = f"Player {Colors.BOLD}{self.current_player}{Colors.RESET}, enter move: "
                     user_input = input(prompt).strip().lower()
                     
-                    if user_input == 'u':
+                    if user_input == 'q':
+                        print(f"{Colors.YELLOW}Returning to menu...{Colors.RESET}")
+                        return "QUIT"
+                    elif user_input == 'u':
                         if self.board.undo_move():
                             self.current_player = 'O' if self.current_player == 'X' else 'X'
                             continue
@@ -194,7 +197,13 @@ def main():
             
             if choice in ['1', '2', '3']:
                 size_input = input(f"Enter board size [default {settings['size']}]: ")
-                size = int(size_input) if size_input.isdigit() else settings['size']
+                if size_input == "":
+                    size = settings['size']
+                elif size_input.isdigit() and int(size_input) > 0:
+                    size = int(size_input)
+                else:
+                    print(f"{Colors.RED}Invalid size. Using default {settings['size']}.{Colors.RESET}")
+                    size = settings['size']
                 print("\nCustomize Markers:")
                 mX = input(f"Marker for Player X [{settings['marker_x']}]: ").strip() or settings['marker_x']
                 while len(mX) > 3:
@@ -207,6 +216,8 @@ def main():
                 if choice == '1':
                     session = GameSession(mode='PvP', size=size, markers=markers)
                     result = session.play()
+                    if result == "QUIT":
+                        continue
                     if result:
                         scores['Total'] += 1
                         if result != 'Draw': scores[result] += 1
@@ -218,11 +229,13 @@ def main():
                     print("2. Medium")
                     print("3. Hard")
                     diff_choice = input("Select (1-3): ")
-                    difficulty = {'1': 'Easy', '2': 'Medium', ' uma: 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
+                    difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
                     speed_input = input(f"AI thinking speed [default {settings['cpu_speed']}s]: ")
                     speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else settings['cpu_speed']
                     session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
                     result = session.play()
+                    if result == "QUIT":
+                        continue
                     if result:
                         scores['Total'] += 1
                         if result != 'Draw': scores[result] += 1
@@ -239,6 +252,8 @@ def main():
                     speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else settings['cpu_speed']
                     session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
                     result = session.play()
+                    if result == "QUIT":
+                        continue
                     if result:
                         scores['Total'] += 1
                         if result != 'Draw': scores[result] += 1
@@ -248,6 +263,8 @@ def main():
                 session = GameSession() 
                 if session.load_game():
                     result = session.play()
+                    if result == "QUIT":
+                        continue
                     if result:
                         scores['Total'] += 1
                         if result != 'Draw': scores[result] += 1
@@ -304,7 +321,12 @@ def main():
                 set_choice = input("\nSelect an option: ")
                 if set_choice == '1':
                     val = input(f"New board size [default {settings['size']}]: ")
-                    if val.isdigit(): settings['size'] = int(val)
+                    if val == "":
+                        pass
+                    elif val.isdigit() and int(val) > 0:
+                        settings['size'] = int(val)
+                    else:
+                        print(f"{Colors.RED}Invalid size.{Colors.RESET}")
                 elif set_choice == '2':
                     val = input(f"New marker X [default {settings['marker_x']}]: ").strip() or settings['marker_x']
                     if len(val) <= 3: settings['marker_x'] = val
@@ -325,9 +347,5 @@ def main():
         print(f"\n\n{Colors.YELLOW}Application interrupted by user. Exiting gracefully...{Colors.RESET}")
         sys.exit(0)
 
-    except KeyboardInterrupt:
-        print(f"\n\n{Colors.YELLOW}Application interrupted by user. Exiting gracefully...{Colors.RESET}")
-        sys.exit(0)
-
-if __name__ == "__main__":
+if __name__ == \"__main__\":
     main()

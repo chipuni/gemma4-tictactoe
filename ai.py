@@ -107,7 +107,7 @@ class TicTacToeAI:
 
     def _evaluate_board(self, board: Board) -> int:
         score = 0
-        lines = self._get_all_winning_lines(board)
+        lines = board.get_winning_lines()
         for line in lines:
             o_count = sum(1 for i in line if board.cells[i] == 'O')
             x_count = sum(1 for i in line if board.cells[i] == 'X')
@@ -122,12 +122,4 @@ class TicTacToeAI:
                 score += 1
         return score
 
-    def _get_all_winning_lines(self, board: Board) -> List[List[int]]:
-        lines = []
-        for r in range(board.size):
-            lines.append([r * board.size + c for c in range(board.size)])
-        for c in range(board.size):
-            lines.append([c + r * board.size for r in range(board.size)])
-        lines.append([i * (board.size + 1) for i in range(board.size)])
-        lines.append([(i + 1) * board.size - 1 for i in range(board.size)])
-        return lines
+

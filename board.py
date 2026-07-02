@@ -58,6 +58,16 @@ class Board:
         self.cells[pos] = old_val
         return True
 
+    def get_winning_lines(self) -> List[List[int]]:
+        lines = []
+        for r in range(self.size):
+            lines.append([r * self.size + c for c in range(self.size)])
+        for c in range(self.size):
+            lines.append([c + r * self.size for r in range(self.size)])
+        lines.append([i * (self.size + 1) for i in range(self.size)])
+        lines.append([(i + 1) * self.size - 1 for i in range(self.size)])
+        return lines
+
     def check_winner(self) -> Optional[str]:
         for row in range(self.size):
             start = row * self.size
