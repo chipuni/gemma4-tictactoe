@@ -33,8 +33,8 @@ def print_logo():
     print(logo)
 
 class GameSession:
-    def __init__(self, mode='PvP', difficulty='Hard', size=3, markers=None, cpu_speed=1.0, blitz_time=None):
-        self.board = Board(size=size)
+    def __init__(self, mode='PvP', difficulty='Hard', size=3, win_condition=3, markers=None, cpu_speed=1.0, blitz_time=None):
+        self.board = Board(size=size, win_condition=win_condition)
         self.current_player = 'X'
         self.mode = mode 
         self.difficulty = difficulty
@@ -87,7 +87,7 @@ class GameSession:
     def play(self):
         while True:
             clear_screen()
-            print(f"{Colors.BOLD}--- TIC TAC TOE {Colors.RESET} (Size: {self.board.size}x{self.board.size})")
+            print(f"{Colors.BOLD}--- CONNECT {self.board.win_condition} ---{Colors.RESET} (Size: {self.board.size}x{self.board.size})")
             if self.blitz_time:
                 print(f"{Colors.YELLOW}{Colors.BOLD}BLITZ MODE: {self.blitz_time}s per move!{Colors.RESET}")
             print(f"Player X: {Colors.BLUE}{self.markers['X']}{Colors.RESET} | Player O: {Colors.RED}{self.markers['O']}{Colors.RESET}")
@@ -97,6 +97,7 @@ class GameSession:
                 print("\nCommands: [move 0-N], ['u' undo], ['s' save], ['h' hint]")
             else:
                 print("\nSpectating CPU vs CPU...")
+
 
 
             is_human_turn = False
@@ -226,6 +227,15 @@ def get_game_settings():
         print(f"{Colors.RED}Invalid size. Using default {settings['size']}.{Colors.RESET}")
         size = settings['size']
 
+    win_input = input(f"Enter win condition (Connect K) [default 3]: ")
+    if win_input == "":
+        win_condition = 3
+    elif win_input.isdigit() and 2 <= int(win_input) <= size:
+        win_condition = int(win_input)
+    else:
+        print(f"{Colors.RED}Invalid condition. Using default 3.{Colors.RESET}")
+        win_condition = 3
+
     print("\nCustomize Markers:")
     mX = input(f"Marker for Player X [{settings['marker_x']}]: ").strip() or settings['marker_x']
     while len(mX) > 3:
@@ -235,7 +245,7 @@ def get_game_settings():
         mO = input("Too long! Marker must be < 4 chars. Enter Player O marker: ").strip()
     markers = {'X': mX, 'O': mO}
 
-    return size, markers
+    return size, win_condition, markers
 
 def main():
     try:
@@ -263,7 +273,7 @@ def main():
             choice = input("\nSelect an option: ")
             
             if choice in ['1', '2', '3']:
-                size, markers = get_game_settings()
+                size, win_condition, markers = get_game_settings()
         
                 # Ask for Blitz mode
                 blitz_choice = input("Enable Blitz Mode (turn timers)? (y/n): ").lower()
@@ -273,7 +283,7 @@ def main():
                     blitz_time = float(b_val) if b_val.replace('.','',1).isdigit() else 10.0
 
                 if choice == '1':
-                    session = GameSession(mode='PvP', size=size, markers=markers, blitz_time=blitz_time)
+                    session = GameSession(mode='PvP', size=size, win_condition=win_condition, markers=markers, blitz_time=blitz_time)
                     result = session.play()
                     if result == "QUIT":
                         continue
@@ -291,7 +301,7 @@ def main():
                     difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
                     speed_input = input(f"AI thinking speed [default {settings['cpu_speed']}s]: ")
                     speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else settings['cpu_speed']
-                    session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed, blitz_time=blitz_time)
+                    session = GameSession(mode='PvE', difficulty=difficulty, size=size, win_condition=win_condition, markers=markers, cpu_speed=speed, blitz_time=blitz_time)
                     result = session.play()
                     if result == "QUIT":
                         continue
@@ -307,9 +317,9 @@ def main():
                     print("3. Hard")
                     diff_choice = input("Select (1-3): ")
                     difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
-                    speed_input = input(f"AI thinking speed [default {settings['cpu_speed']} শরীর]s]: ")
+                    speed_input = input(f"AI thinking speed [default {settings['cpu_speed']}s]: ")
                     speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else settings['cpu_speed']
-                    session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed, blitz_time=blitz_time)
+                    session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, win_condition=win_condition, markers=markers, cpu_speed=speed, blitz_time=blitz_time)
                     result = session.play()
                     if result == "QUIT":
                         continue

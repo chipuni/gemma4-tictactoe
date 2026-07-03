@@ -11,8 +11,9 @@ class Colors:
 from typing import Optional, List
 
 class Board:
-    def __init__(self, size: int = 3):
+    def __init__(self, size: int = 3, win_condition: int = 3):
         self.size = size
+        self.win_condition = win_condition
         self.cells = [' ' for _ in range(size * size)]
         self.history = [] # For undo functionality
 
@@ -73,12 +74,29 @@ class Board:
 
     def get_winning_lines(self) -> List[List[int]]:
         lines = []
-        for r in range(self.size):
-            lines.append([r * self.size + c for c in range(self.size)])
-        for c in range(self.size):
-            lines.append([c + r * self.size for r in range(self.size)])
-        lines.append([i * (self.size + 1) for i in range(self.size)])
-        lines.append([(i + 1) * self.size - 1 for i in range(self.size)])
+        k = self.win_condition
+        s = self.size
+
+        # Horizontal lines of length k
+        for r in range(s):
+            for c in range(s - k + 1):
+                lines.append([r * s + (c + i) for i in range(k)])
+        
+        # Vertical lines of length k
+        for c in range(s):
+            for r in range(s - k + 1):
+                lines.append([(r + i) * s + c for i in range(k)])
+        
+        # Diagonal lines (\) of length k
+        for r in range(s - k + 1):
+            for c in range(s - k + 1):
+                lines.append([(r + i) * s + (c + i) for i in range(k)])
+        
+        # Anti-diagonal lines (/) of length k
+        for r in range(s - k + 1):
+            for c in range(k - 1, s):
+                lines.append([(r + i) * s + (c - i) for i in range(k)])
+
         return lines
 
     def get_winning_line(self) -> Optional[List[int]]:
@@ -99,13 +117,14 @@ class Board:
     def to_dict(self) -> dict:
         return {
             'size': self.size,
+            'win_condition': self.win_condition,
             'cells': self.cells,
             'history': self.history
         }
-
+    
     @classmethod
     def from_dict(cls, data: dict):
-        board = cls(size=data['size'])
+        board = cls(size=data['size'], win_condition=data.get('win_condition', 3))
         board.cells = data['cells']
         board.history = data['history']
         return board
