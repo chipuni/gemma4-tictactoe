@@ -112,13 +112,16 @@ class TicTacToeAI:
             o_count = sum(1 for i in line if board.cells[i] == 'O')
             x_count = sum(1 for i in line if board.cells[i] == 'X')
             empty_count = len(line) - o_count - x_count
+            
+            # Priority to lines that are close to winning
             if o_count > 0 and x_count == 0:
-                weight = 10 ** (o_count + 1) if empty_count > 0 else 50
+                weight = (board.size ** o_count) if empty_count > 0 else 100
                 score += weight
             elif x_count > 0 and o_count == 0:
-                weight = 10 ** (x_count + 1) if empty_count > 0 else 50
+                weight = (board.size ** x_count) if empty_count > 0 else 100
                 score -= weight
             elif o_count == 0 and x_count == 0:
+                # Favor center slightly more for larger boards
                 score += 1
         return score
 

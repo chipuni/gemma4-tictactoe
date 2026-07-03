@@ -120,7 +120,21 @@ class GameSession:
                         input("Press Enter to continue...")
                         continue
                     
-                    move = int(user_input)
+                    # Parse coordinate or index
+                    move = -1
+                    if user_input.isdigit():
+                        move = int(user_input)
+                    elif len(user_input) >= 2 and user_input[0].isalpha() and user_input[1:].isdigit():
+                        col_char = user_input[0].upper()
+                        row_val = int(user_input[1:]) - 1
+                        col_val = ord(col_char) - ord('A')
+                        if 0 <= row_val < self.board.size and 0 <= col_val < self.board.size:
+                            move = row_val * self.board.size + col_val
+                    else:
+                        print(f"{Colors.RED}Invalid format. Use index (e.g. '4') or coordinate (e.g. 'A1').{Colors.RESET}")
+                        input("Press Enter to continue...")
+                        continue
+
                 except ValueError:
                     print(f"{Colors.RED}Invalid input. Please enter a number, 'u', 's', or 'h'.{Colors.RESET}")
                     input("Press Enter to continue...")
@@ -170,6 +184,29 @@ def save_settings(settings):
     with open('settings.json', 'w') as f:
         json.dump(settings, f)
 
+def get_game_settings():
+    """Handles the input for game startup settings."""
+    settings = load_settings()
+    size_input = input(f"Enter board size [default {settings['size']}]: ")
+    if size_input == "":
+        size = settings['size']
+    elif size_input.isdigit() and int(size_input) > 0:
+        size = int(size_input)
+    else:
+        print(f"{Colors.RED}Invalid size. Using default {settings['size']}.{Colors.RESET}")
+        size = settings['size']
+
+    print("\nCustomize Markers:")
+    mX = input(f"Marker for Player X [{settings['marker_x']}]: ").strip() or settings['marker_x']
+    while len(mX) > 3:
+        mX = input("Too long! Marker must be < 4 chars. Enter Player X marker: ").strip()
+    mO = input(f"Marker for Player O [{settings['marker_o']}]: ").strip() or settings['marker_o']
+    while len(mO) > 3:
+        mO = input("Too long! Marker must be < 4 chars. Enter Player O marker: ").strip()
+    markers = {'X': mX, 'O': mO}
+
+    return size, markers
+
 def main():
     try:
         scores = load_scores()
@@ -177,7 +214,7 @@ def main():
             scores['Total'] = scores['X'] + scores['O'] + scores['Draw']
         
         settings = load_settings()
-
+        
         while True:
             clear_screen()
             print_logo()
@@ -196,22 +233,7 @@ def main():
             choice = input("\nSelect an option: ")
             
             if choice in ['1', '2', '3']:
-                size_input = input(f"Enter board size [default {settings['size']}]: ")
-                if size_input == "":
-                    size = settings['size']
-                elif size_input.isdigit() and int(size_input) > 0:
-                    size = int(size_input)
-                else:
-                    print(f"{Colors.RED}Invalid size. Using default {settings['size']}.{Colors.RESET}")
-                    size = settings['size']
-                print("\nCustomize Markers:")
-                mX = input(f"Marker for Player X [{settings['marker_x']}]: ").strip() or settings['marker_x']
-                while len(mX) > 3:
-                    mX = input("Too long! Marker must be < 4 chars. Enter Player X marker: ").strip()
-                mO = input(f"Marker for Player O [{settings['marker_o']}]: ").strip() or settings['marker_o']
-                while len(mO) > 3:
-                    mO = input("Too long! Marker must be < 4 chars. Enter Player O marker: ").strip()
-                markers = {'X': mX, 'O': mO}
+                size, markers = get_game_settings()
         
                 if choice == '1':
                     session = GameSession(mode='PvP', size=size, markers=markers)
@@ -347,5 +369,5 @@ def main():
         print(f"\n\n{Colors.YELLOW}Application interrupted by user. Exiting gracefully...{Colors.RESET}")
         sys.exit(0)
 
-if __name__ == \"__main__\":
+if __name__ == "__main__":
     main()

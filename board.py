@@ -21,11 +21,17 @@ class Board:
         w = 3 if self.size < 10 else len(str(self.size * self.size - 1)) + 2
         h = "─" * w
         
+        # Print column headers (A, B, C...)
+        headers = "  " + " ".join([chr(65 + i) if i < 26 else f"{i//26+1}{chr(65 + i%26)}" for i in range(self.size)])
+        print(headers)
+
         border_top = f"┌{'┬'.join([h]*self.size)}┐"
         print(border_top)
         
         for r in range(self.size):
-            row_str = "│"
+            # Print row header (1, 2, 3...)
+            row_label = f"{r + 1} " if r < 10 else f"{r + 1:2}"
+            row_str = f"{row_label}│"
             for c in range(self.size):
                 cell = self.cells[r * self.size + c]
                 if cell == 'X': 
