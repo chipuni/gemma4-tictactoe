@@ -2,6 +2,7 @@ import json
 import os
 import time
 import sys
+import select
 from board import Board, Colors
 from ai import TicTacToeAI
 
@@ -32,12 +33,13 @@ def print_logo():
     print(logo)
 
 class GameSession:
-    def __init__(self, mode='PvP', difficulty='Hard', size=3, markers=None, cpu_speed=1.0):
+    def __init__(self, mode='PvP', difficulty='Hard', size=3, markers=None, cpu_speed=1.0, blitz_time=None):
         self.board = Board(size=size)
         self.current_player = 'X'
         self.mode = mode 
         self.difficulty = difficulty
         self.cpu_speed = cpu_speed
+        self.blitz_time = blitz_time # Time in seconds per move
         self.markers = markers if markers else {'X': 'X', 'O': 'O'}
         self.ai_x = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
         self.ai_o = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
@@ -70,10 +72,24 @@ class GameSession:
         self.ai_o = TicTacToeAI(difficulty=self.difficulty) if self.mode in ['PvE', 'CpuCpu'] else None
         return True
 
+    def _get_input_with_timeout(self, prompt, timeout):
+        """Reads input with a timeout using select.」"""
+        sys.stdout.write(prompt)
+        sys.stdout.flush()
+        
+        # Use select to wait for data on stdin
+        ready = select.select([sys.stdin], [], [], timeout)
+        if ready[0]:
+            return sys.stdin.readline().strip().lower()
+        else:
+            return None
+
     def play(self):
         while True:
             clear_screen()
             print(f"{Colors.BOLD}--- TIC TAC TOE {Colors.RESET} (Size: {self.board.size}x{self.board.size})")
+            if self.blitz_time:
+                print(f"{Colors.YELLOW}{Colors.BOLD}BLITZ MODE: {self.blitz_time}s per move!{Colors.RESET}")
             print(f"Player X: {Colors.BLUE}{self.markers['X']}{Colors.RESET} | Player O: {Colors.RED}{self.markers['O']}{Colors.RESET}")
             self.board.display_fixed(self.markers)
             
@@ -81,6 +97,7 @@ class GameSession:
                 print("\nCommands: [move 0-N], ['u' undo], ['s' save], ['h' hint]")
             else:
                 print("\nSpectating CPU vs CPU...")
+
 
             is_human_turn = False
             if self.mode == 'PvP':
@@ -93,7 +110,15 @@ class GameSession:
             if is_human_turn:
                 try:
                     prompt = f"Player {Colors.BOLD}{self.current_player}{Colors.RESET}, enter move: "
-                    user_input = input(prompt).strip().lower()
+                    if self.blitz_time:
+                        user_input = self._get_input_with_timeout(prompt, self.blitz_time)
+                        if user_input is None:
+                            print(f"\n{Colors.RED}{Colors.BOLD}TIME OUT! Player {self.current_player} loses turn.{Colors.RESET}")
+                            input("Press Enter to continue...")
+                            self.current_player = 'O' if self.current_player == 'X' else 'X'
+                            continue
+                    else:
+                        user_input = input(prompt).strip().lower()
                     
                     if user_input == 'q':
                         print(f"{Colors.YELLOW}Returning to menu...{Colors.RESET}")
@@ -122,18 +147,22 @@ class GameSession:
                     
                     # Parse coordinate or index
                     move = -1
-                    if user_input.isdigit():
+                    if user_input and user_input.isdigit():
                         move = int(user_input)
-                    elif len(user_input) >= 2 and user_input[0].isalpha() and user_input[1:].isdigit():
+                    elif user_input and len(user_input) >= 2 and user_input[0].isalpha() and user_input[1:].isdigit():
                         col_char = user_input[0].upper()
                         row_val = int(user_input[1:]) - 1
                         col_val = ord(col_char) - ord('A')
                         if 0 <= row_val < self.board.size and 0 <= col_val < self.board.size:
                             move = row_val * self.board.size + col_val
                     else:
-                        print(f"{Colors.RED}Invalid format. Use index (e.g. '4') or coordinate (e.g. 'A1').{Colors.RESET}")
-                        input("Press Enter to continue...")
-                        continue
+                        if user_input is not None:
+                            print(f"{Colors.RED}Invalid format. Use index (e.g. '4') or coordinate (e.g. 'A1').{Colors.RESET}")
+                            input("Press Enter to continue...")
+                            continue
+                        else:
+                            # This case is handled by timeout, but for safety:
+                            continue
 
                 except ValueError:
                     print(f"{Colors.RED}Invalid input. Please enter a number, 'u', 's', or 'h'.{Colors.RESET}")
@@ -236,8 +265,15 @@ def main():
             if choice in ['1', '2', '3']:
                 size, markers = get_game_settings()
         
+                # Ask for Blitz mode
+                blitz_choice = input("Enable Blitz Mode (turn timers)? (y/n): ").lower()
+                blitz_time = None
+                if blitz_choice == 'y':
+                    b_val = input("Enter time per move in seconds [default 10]: ")
+                    blitz_time = float(b_val) if b_val.replace('.','',1).isdigit() else 10.0
+
                 if choice == '1':
-                    session = GameSession(mode='PvP', size=size, markers=markers)
+                    session = GameSession(mode='PvP', size=size, markers=markers, blitz_time=blitz_time)
                     result = session.play()
                     if result == "QUIT":
                         continue
@@ -255,7 +291,7 @@ def main():
                     difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
                     speed_input = input(f"AI thinking speed [default {settings['cpu_speed']}s]: ")
                     speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else settings['cpu_speed']
-                    session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
+                    session = GameSession(mode='PvE', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed, blitz_time=blitz_time)
                     result = session.play()
                     if result == "QUIT":
                         continue
@@ -271,9 +307,9 @@ def main():
                     print("3. Hard")
                     diff_choice = input("Select (1-3): ")
                     difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
-                    speed_input = input(f"AI thinking speed [default {settings['cpu_speed']}s]: ")
+                    speed_input = input(f"AI thinking speed [default {settings['cpu_speed']} শরীর]s]: ")
                     speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else settings['cpu_speed']
-                    session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed)
+                    session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, markers=markers, cpu_speed=speed, blitz_time=blitz_time)
                     result = session.play()
                     if result == "QUIT":
                         continue

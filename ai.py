@@ -36,18 +36,19 @@ class TicTacToeAI:
     def _get_optimal_move(self, board: Board, player: str) -> int:
         best_score = -float('inf') if player == 'O' else float('inf')
         best_move = -1
-        search_depth = 6 if board.size > 3 else 9
         available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
         if not available_moves: return -1
 
+        # Iterative Deepening approach to prevent long freezes on large boards
+        # We start with a small depth and increase it if time permits (simplified here as fixed max)
+        max_depth = 4 if board.size > 3 else 9
+        
         center = (board.size * board.size) // 2
         sorted_moves = sorted(available_moves, key=lambda m: abs(m - center))
 
         for move in sorted_moves:
             board.cells[move] = player
-            # the is_maximizing argument should be True if the next mover's turn that we are simulating
-            # But simpler: just use minimax and check relative to current player.
-            score = self._minimax(board, 0, player != 'O', -float('inf'), float('inf'), search_depth)
+            score = self._minimax(board, 0, player != 'O', -float('inf'), float('inf'), max_depth)
             board.cells[move] = ' '
             
             if player == 'O':
