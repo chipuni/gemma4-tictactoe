@@ -147,22 +147,23 @@ class GameSession:
                 if self.mode != 'CpuCpu':
                     input("Press Enter to continue...")
 
-            if self.board.make_move(move, self.current_player):
-                winner = self.board.check_winner()
-                if winner:
-                    clear_screen()
-                    print(f"{Colors.BOLD}--- GAME OVER ---{Colors.RESET}")
-                    self.board.display_fixed(self.markers)
-                    if winner == 'Draw':
-                        print(f"{Colors.YELLOW}{Colors.BOLD}It's a draw!{Colors.RESET}")
-                    else:
-                        print(f"{Colors.GREEN}{Colors.BOLD}Player {winner} wins!{Colors.RESET}")
-                    input("\nPress Enter to return to menu...")
-                    return winner
-                self.current_player = 'O' if self.current_player == 'X' else 'X'
-            else:
-                print(f"{Colors.RED}Invalid move. Position occupied or out of bounds.{Colors.RESET}")
-                input("Press Enter to continue...")
+                if self.board.make_move(move, self.current_player):
+                    winner = self.board.check_winner()
+                    if winner:
+                        clear_screen()
+                        print(f"{Colors.BOLD}--- GAME OVER ---{Colors.RESET}")
+                        winning_line = self.board.get_winning_line()
+                        self.board.display_fixed(self.markers, highlight_line=winning_line)
+                        if winner == 'Draw':
+                            print(f"{Colors.YELLOW}{Colors.BOLD}It's a draw!{Colors.RESET}")
+                        else:
+                            print(f"{Colors.GREEN}{Colors.BOLD}Player {winner} wins!{Colors.RESET}")
+                        input("\nPress Enter to return to menu...")
+                        return winner
+                    self.current_player = 'O' if self.current_player == 'X' else 'X'
+                else:
+                    print(f"{Colors.RED}Invalid move. Position occupied or out of bounds.{Colors.RESET}")
+                    input("Press Enter to continue...")
 
 def load_scores():
     if os.path.exists('scores.json'):

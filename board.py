@@ -16,7 +16,7 @@ class Board:
         self.cells = [' ' for _ in range(size * size)]
         self.history = [] # For undo functionality
 
-    def display_fixed(self, markers: dict = {'X': 'X', 'O': 'O'}):
+    def display_fixed(self, markers: dict = {'X': 'X', 'O': 'O'}, highlight_line: List[int] = None):
         print("\n")
         w = 3 if self.size < 10 else len(str(self.size * self.size - 1)) + 2
         h = "─" * w
@@ -33,13 +33,20 @@ class Board:
             row_label = f"{r + 1} " if r < 10 else f"{r + 1:2}"
             row_str = f"{row_label}│"
             for c in range(self.size):
-                cell = self.cells[r * self.size + c]
+                idx = r * self.size + c
+                cell = self.cells[idx]
+                
+                # Colors for markers
                 if cell == 'X': 
                     fmt = f"{Colors.BLUE}{markers.get('X', 'X')}{Colors.RESET}"
                 elif cell == 'O': 
                     fmt = f"{Colors.RED}{markers.get('O', 'O')}{Colors.RESET}"
                 else: 
-                    fmt = " " if self.size == 3 else str(r * self.size + c)
+                    fmt = " " if self.size == 3 else str(idx)
+
+                # Highlight winning line in yellow background or bold
+                if highlight_line and idx in highlight_line:
+                    fmt = f"{Colors.YELLOW}{Colors.BOLD}{fmt}{Colors.RESET}"
                 
                 row_str += f" {fmt.center(w-2)} " + "│"
             print(row_str)
@@ -74,25 +81,19 @@ class Board:
         lines.append([(i + 1) * self.size - 1 for i in range(self.size)])
         return lines
 
+    def get_winning_line(self) -> Optional[List[int]]:
+        """Returns the indices of the winning line if one exists."""
+        for line in self.get_winning_lines():
+            if all(self.cells[i] == self.cells[line[0]] != ' ' for i in line):
+                return line
+        return None
+
     def check_winner(self) -> Optional[str]:
-        for row in range(self.size):
-            start = row * self.size
-            if all(self.cells[start + i] == self.cells[start] != ' ' for i in range(self.size)):
-                return self.cells[start]
-
-        for col in range(self.size):
-            if all(self.cells[col + i * self.size] == self.cells[col] != ' ' for i in range(self.size)):
-                return self.cells[col]
-
-        if all(self.cells[i * (self.size + 1)] == self.cells[0] != ' ' for i in range(self.size)):
-            return self.cells[0]
-
-        if all(self.cells[(i + 1) * self.size - 1] == self.cells[self.size - 1] != ' ' for i in range(self.size)):
-            return self.cells[self.size - 1]
-
+        winning_line = self.get_winning_line()
+        if winning_line:
+            return self.cells[winning_line[0]]
         if ' ' not in self.cells:
             return 'Draw'
-        
         return None
 
     def to_dict(self) -> dict:
