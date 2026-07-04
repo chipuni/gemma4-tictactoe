@@ -1,13 +1,17 @@
 import random
+import time
 from typing import List, Dict, Tuple
 from board import Board
+
 
 class TicTacToeAI:
     def __init__(self, difficulty='Hard'):
         self.difficulty = difficulty # 'Easy', 'Medium', 'Hard'
         self.transposition_table = {}
+        self._turn_start_time = 0.0
 
     def get_move(self, board: Board) -> int:
+        self._turn_start_time = time.time() # Mark turn start for time-bounded search
         self.transposition_table.clear() 
         if self.difficulty == 'Easy':
             return self._random_move(board)
@@ -113,9 +117,16 @@ class TicTacToeAI:
         return tuple(cells)
 
     def _minimax(self, board: Board, depth: int, is_maximizing: bool, alpha: float, beta: float, max_depth: int) -> int:
+        # Time-bounded search: stop if the AI has spent too much time on a single move
+        # We'll check elapsed time. To do this properly, we need to pass start_time in.
+        # Since modifying signatures of recursive calls is heavy, let's use a class attribute for current turn start.
+        if time.time() - self._turn_start_time > 2.0: # 2 second hard cap per move depth search
+            return self._evaluate_board(board)
+
         state_key = (self._get_state_key(board.cells), depth, is_maximizing)
         if state_key in self.transposition_table:
             return self.transposition_table[state_key]
+        # ... rest of function remains same
 
         winner = board.check_winner()
         if winner == 'O': return 100 - depth

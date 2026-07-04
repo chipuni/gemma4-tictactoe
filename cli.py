@@ -6,6 +6,7 @@ import select
 from board import Board, Colors
 from game_manager import GameSession
 from history_manager import save_game_to_history, load_game_history
+from save_manager import save_game, load_game, list_save_slots
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -394,17 +395,36 @@ def main():
                 input("\nPress Enter to return to menu...")
 
             elif choice == '3':
-                session = GameSession() 
-                if session.load_game():
-                    result = play_game(session)
-                    if result and result != "QUIT":
-                        scores['Total'] += 1
-                        if result != 'Draw': scores[result] += 1
-                        else: scores['Draw'] += 1
-                        save_scores(scores)
+                slots = list_save_slots()
+                if not slots:
+                    print(f"{Colors.RED}No saved games found!{Colors.RESET}")
+                    input("\nPress Enter to continue...")
+                    continue
+                
+                print(f"\n{Colors.BOLD}Available Save Slots:{Colors.RESET}")
+                for s in slots:
+                    print(f"Slot {s}")
+                
+                slot_choice = input("Select a slot to load (or 'c' to cancel): ")
+                if slot_choice.isdigit():
+                    slot = int(slot_choice)
+                    # Use the save_manager logic to get filename
+                    filename = f"savegame_{slot}.json" 
+                    session = GameSession()
+                    if session.load_game(filename):
+                        result = play_game(session)
+                        if result and result != "QUIT":
+                            scores['Total'] += 1
+                            if result != 'Draw': scores[result] += 1
+                            else: scores['Draw'] += 1
+                            save_scores(scores)
+                    else:
+                        print(f"{Colors.RED}Failed to load slot {slot}!{Colors.RESET}")
+                elif slot_choice == 'c':
+                    continue
                 else:
-                    print(f"{Colors.RED}No saved game found!{Colors.RESET}")
-                    input("Press Enter to continue...")
+                    print(f"{Colors.RED}Invalid slot choice!{Colors.RESET}")
+                input("\nPress Enter to continue...")
 
             elif choice == '4':
                 handle_view_stats(scores)
