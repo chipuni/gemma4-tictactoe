@@ -54,6 +54,9 @@ class GameSession:
 
     def undo_move(self) -> bool:
         if self.board.undo_move():
+            # Remove the last move from history as well
+            if self.move_history:
+                self.move_history.pop()
             self.current_player = 'O' if self.current_player == 'X' else 'X'
             return True
         return False

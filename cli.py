@@ -328,22 +328,72 @@ def main():
             print_logo()
             print("\n" + "="*40)
             print(f"{Colors.BOLD}MAIN MENU{Colors.RESET}")
-            print("1. Play Human vs Human (PvP)")
-            print("2. Play Human vs CPU (PvE)")
-            print("3. Play CPU vs CPU (Spectator)")
-            print("4. Load Saved Game")
-            print("5. View Statistics")
-            print("6. Replay Past Games")
-            print("7. Reset All Scores")
-            print("8. Help & Commands")
-            print("9. Settings")
-            print("10. Quit")
+            print("1. Play Single Game")
+            print("2. Tournament Mode (Best of N)")
+            print("3. Load Saved Game")
+            print("4. View Statistics")
+            print("5. Replay Past Games")
+            print("6. Reset All Scores")
+            print("7. Help & Commands")
+            print("8. Settings")
+            print("9. Quit")
             
             choice = input("\nSelect an option: ")
             
-            if choice == '1' or choice == '2' or choice == '3':
+            if choice == '1':
                 scores = handle_play_game(scores, settings)
-            elif choice == '4':
+            elif choice == '2':
+                # Tournament Mode implementation
+                clear_screen()
+                print(f"{Colors.BOLD}--- TOURNAMENT MODE ---{Colors.RESET}")
+                try:
+                    n_games = int(input("Enter number of games for the tournament (e.g., 3 or 5): "))
+                    if n_games < 1: raise ValueError
+                except ValueError:
+                    print(f"{Colors.RED}Invalid number of games!{Colors.RESET}")
+                    input("\nPress Enter to return to menu...")
+                    continue
+
+                # Setup for the tournament (same settings for all games)
+                size, win_condition, markers = get_game_settings()
+                blitz_choice = input("Enable Blitz Mode (turn timers)? (y/n): ").lower()
+                blitz_time = None
+                if blitz_choice == 'y':
+                    b_val = input("Enter time per move in seconds [default 10]: ")
+                    blitz_time = float(b_val) if b_val.replace('.','',1).isdigit() else 10.0
+
+                tournament_scores = {'X': 0, 'O': 0, 'Draw': 0}
+                for g in range(n_games):
+                    clear_screen()
+                    print(f"{Colors.BOLD}--- GAME {g+1}/{n_games} ---{Colors.RESET}")
+                    # For simplicity, we'll use PvP for tournaments here or prompt for mode
+                    # To keep it clean, let's just do a quick setup
+                    mode = 'PvP' if 'X' in markers and 'O' in markers else 'PvE' # simplified
+                    session = GameSession(mode=mode, size=size, win_condition=win_condition, markers=markers, blitz_time=blitz_time)
+                    result = play_game(session)
+                    if result:
+                        tournament_scores[result] += 1
+                        # Update overall scores too
+                        scores['Total'] += 1
+                        if result != 'Draw': scores[result] += 1
+                        else: scores['Draw'] += 1
+                        save_scores(scores)
+                    
+                    if (tournament_scores['X'] > n_games // 2) or (tournament_scores['O'] > n_games // 2):
+                        break # Early exit if winner found
+
+                clear_screen()
+                print(f"{Colors.BOLD}--- TOURNAMENT RESULTS ---{Colors.RESET}")
+                print(f"X: {tournament_scores['X']} | O: {tournament_scores['O']} | Draw: {tournament_scores['Draw']}")
+                if tournament_scores['X'] > tournament_scores['O']:
+                    print(f"{Colors.GREEN}{Colors.BOLD}OVERALL WINNER: PLAYER X!{Colors.RESET}")
+                elif tournament_scores['O'] > tournament_scores['X']:
+                    print(f"{Colors.GREEN}{Colors.BOLD}OVERALL WINNER: PLAYER O!{Colors.RESET}")
+                else:
+                    print(f"{Colors.YELLOW}TOURNAMENT ENDED IN A DRAW!{Colors.RESET}")
+                input("\nPress Enter to return to menu...")
+
+            elif choice == '3':
                 session = GameSession() 
                 if session.load_game():
                     result = play_game(session)
@@ -356,11 +406,11 @@ def main():
                     print(f"{Colors.RED}No saved game found!{Colors.RESET}")
                     input("Press Enter to continue...")
 
-            elif choice == '5':
+            elif choice == '4':
                 handle_view_stats(scores)
-            elif choice == '6':
+            elif choice == '5':
                 handle_replay_games()
-            elif choice == '7':
+            elif choice == '6':
                 confirm = input("Are you sure you want to reset all scores? (y/n): ")
                 if confirm.lower() == 'y':
                     scores = {'X': 0, 'O': 0, 'Draw': 0, 'Total': 0}
@@ -370,7 +420,7 @@ def main():
                     print("Reset cancelled.")
                 input("\nPress Enter to return to menu...")
 
-            elif choice == '8':
+            elif choice == '7':
                 clear_screen()
                 print(f"{Colors.BOLD}--- HELP & COMMANDS ---{Colors.RESET}")
                 print("\nGame Rules:")
@@ -383,13 +433,16 @@ def main():
                 print(f"  {Colors.CYAN}'0-N'{Colors.RESET}: Enter the index of the cell you wish to occupy.")
                 input("\nPress Enter to return to menu...")
 
-            elif choice == '9':
+            elif choice == '8':
                 handle_settings(settings)
-            elif choice == '10':
+            elif choice == '9':
                 print("Thanks for playing!")
                 break
             else:
                 print(f"{Colors.RED}Invalid selection.{Colors.RESET}, try again.")
+    except KeyboardInterrupt:
+        print(f"\n\n{Colors.YELLOW}Application interrupted by user. Exiting gracefully...{Colors.RESET}")
+        sys.exit(0)
     except KeyboardInterrupt:
         print(f"\n\n{Colors.YELLOW}Application interrupted by user. Exiting gracefully...{Colors.RESET}")
         sys.exit(0)
