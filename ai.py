@@ -116,10 +116,12 @@ class TicTacToeAI:
             
             # Priority to lines that are close to winning
             if o_count > 0 and x_count == 0:
-                weight = (board.size ** o_count) if empty_count > 0 else 100
+                # Higher weight for lines that are almost complete
+                weight = (10 ** o_count) * (board.size - empty_count)
                 score += weight
             elif x_count > 0 and o_count == 0:
-                weight = (board.size ** x_count) if empty_count > 0 else 100
+                # Higher weight for lines that are almost complete
+                weight = (10 ** x_count) * (board.size - empty_count)
                 score -= weight
             elif o_count == 0 and x_count == 0:
                 # Favor center slightly more for larger boards

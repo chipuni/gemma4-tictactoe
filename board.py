@@ -23,16 +23,16 @@ class Board:
         h = "─" * w
         
         # Print column headers (A, B, C...)
-        headers = "  " + " ".join([chr(65 + i) if i < 26 else f"{i//26+1}{chr(65 + i%26)}" for i in range(self.size)])
+        headers = "    " + " ".join([chr(65 + i) if i < 26 else f"{i//26+1}{chr(65 + i%26)}" for i in range(self.size)])
         print(headers)
 
-        border_top = f"┌{'┬'.join([h]*self.size)}┐"
+        border_top = f"  ┌{'┬'.join([h]*self.size)}┐"
         print(border_top)
         
         for r in range(self.size):
             # Print row header (1, 2, 3...)
             row_label = f"{r + 1} " if r < 10 else f"{r + 1:2}"
-            row_str = f"{row_label}│"
+            row_str = f"{row_label} │"
             for c in range(self.size):
                 idx = r * self.size + c
                 cell = self.cells[idx]
