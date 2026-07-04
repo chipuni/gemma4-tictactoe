@@ -145,7 +145,13 @@ def play_game(session: GameSession):
                 return winner
             session.current_player = 'O' if session.current_player == 'X' else 'X'
         else:
-            print(f"{Colors.RED}Invalid move. Position occupied or out of bounds.{Colors.RESET}")
+            # Improved error messaging based on the reason for failure
+            if move < 0 or move >= len(session.board.cells):
+                print(f"{Colors.RED}Move {move} is out of bounds!{Colors.RESET}")
+            elif session.board.cells[move] != ' ':
+                print(f"{Colors.RED}Position {move} is already occupied by {session.board.cells[move]}!{Colors.RESET}")
+            else:
+                print(f"{Colors.RED}Invalid move.{Colors.RESET}")
             input("Press Enter to continue...")
 
 def load_scores():

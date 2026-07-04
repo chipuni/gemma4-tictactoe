@@ -59,7 +59,26 @@ class TicTacToeAI:
         return random.choice(available_moves) if available_moves else -1
 
     def _best_move(self, board: Board) -> int:
-        return self._get_optimal_move(board, player='O')
+        available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
+        if not available_moves: return -1
+
+        # Depth increases as the game progresses or based on board size
+        depth_limit = 4 if board.size > 3 else 9
+        center = (board.size * board.size) // 2
+        sorted_moves = sorted(available_moves, key=lambda m: abs(m - center))
+
+        best_score = -float('inf')
+        best_move = -1
+
+        for move in sorted_moves:
+            board.cells[move] = 'O'
+            score = self._minimax(board, 0, False, -float('inf'), float('inf'), depth_limit)
+            board.cells[move] = ' '
+            if score > best_score:
+                best_score = score
+                best_move = move
+        
+        return best_move if best_move != -1 else self._random_move(board)
 
     def _get_optimal_move(self, board: Board, player: str) -> int:
         best_score = -float('inf') if player == 'O' else float('inf')
