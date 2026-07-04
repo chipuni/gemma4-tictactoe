@@ -16,6 +16,7 @@ class GameSession:
         self.ai_x = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
         self.ai_o = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
         self.hint_ai = TicTacToeAI(difficulty='Hard')
+        self.move_history = [] # Track moves for replay/logging
 
     def save_game(self, filename="savegame.json"):
         data = {
@@ -47,6 +48,7 @@ class GameSession:
 
     def make_move(self, move: int, player: str) -> bool:
         if self.board.make_move(move, player):
+            self.move_history.append({'player': player, 'move': move})
             return True
         return False
 

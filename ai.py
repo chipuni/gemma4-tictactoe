@@ -11,12 +11,40 @@ class TicTacToeAI:
         self.transposition_table.clear() 
         if self.difficulty == 'Easy':
             return self._random_move(board)
-        elif self.difficulty == 'Medium':
+        
+        # Optimization: Check for immediate win or block first
+        immediate_move = self._check_immediate_move(board, 'O') # AI usually plays O
+        if immediate_move != -1:
+            return immediate_move
+
+        if self.difficulty == 'Medium':
             if random.random() < 0.4:
                 return self._random_move(board)
             return self._best_move(board)
         else: # Hard
             return self._best_move(board)
+
+    def _check_immediate_move(self, board: Board, player: str) -> int:
+        """Checks if there is a move that immediately wins or blocks the opponent."""
+        # 1. Can I win right now?
+        available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
+        for move in available_moves:
+            board.cells[move] = player
+            if board.check_winner() == player:
+                board.cells[move] = ' '
+                return move
+            board.cells[move] = ' '
+            
+        # 2. Must I block the opponent?
+        opponent = 'X' if player == 'O' else 'O'
+        for move in available_moves:
+            board.cells[move] = opponent
+            if board.check_winner() == opponent:
+                board.cells[move] = ' '
+                return move
+            board.cells[move] = ' '
+            
+        return -1
 
     def get_suggested_move(self, board: Board) -> int:
         """Provides the optimal move for a human player (X)."""
