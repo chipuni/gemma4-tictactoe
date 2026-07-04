@@ -7,6 +7,7 @@ from board import Board, Colors
 from game_manager import GameSession
 from history_manager import save_game_to_history, load_game_history
 from save_manager import save_game, load_game, list_save_slots
+from puzzles import get_puzzles
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -332,12 +333,13 @@ def main():
             print("1. Play Single Game")
             print("2. Tournament Mode (Best of N)")
             print("3. Load Saved Game")
-            print("4. View Statistics")
-            print("5. Replay Past Games")
-            print("6. Reset All Scores")
-            print("7. Help & Commands")
-            print("8. Settings")
-            print("9. Quit")
+            print("4. Puzzle Mode")
+            print("5. View Statistics")
+            print("6. Replay Past Games")
+            print("7. Reset All Scores")
+            print("8. Help & Commands")
+            print("9. Settings")
+            print("10. Quit")
             
             choice = input("\nSelect an option: ")
             
@@ -427,8 +429,10 @@ def main():
                 input("\nPress Enter to continue...")
 
             elif choice == '4':
-                handle_view_stats(scores)
+                handle_puzzles()
             elif choice == '5':
+                handle_view_stats(scores)
+            elif choice == '6':
                 handle_replay_games()
             elif choice == '6':
                 confirm = input("Are you sure you want to reset all scores? (y/n): ")
