@@ -140,10 +140,16 @@ def play_game(session: GameSession):
                 print(f"{Colors.BOLD}--- GAME OVER ---{Colors.RESET}")
                 winning_line = session.get_winning_line()
                 session.board.display_fixed(session.markers, highlight_line=winning_line)
+                
+                # Detailed Summary
+                total_moves = len(session.board.history)
+                print(f"\n{Colors.BOLD}Match Summary:{Colors.RESET}")
+                print(f"Total Moves: {total_moves}")
                 if winner == 'Draw':
-                    print(f"{Colors.YELLOW}{Colors.BOLD}It's a draw!{Colors.RESET}")
+                    print(f"{Colors.YELLOW}{Colors.BOLD}Result: It's a draw!{Colors.RESET}")
                 else:
-                    print(f"{Colors.GREEN}{Colors.BOLD}Player {winner} wins!{Colors.RESET}")
+                    print(f"{Colors.GREEN}{Colors.BOLD}Result: Player {winner} wins!{Colors.RESET}")
+                
                 input("\nPress Enter to return to menu...")
                 return winner
             session.current_player = 'O' if session.current_player == 'X' else 'X'

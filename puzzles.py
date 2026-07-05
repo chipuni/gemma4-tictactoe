@@ -69,7 +69,7 @@ PUZZLES = [
         "cells": ['X', ' ', ' ', 
                   ' ', 'O', ' ', 
                   ' ', ' ', 'X'],
-        "solution": 1, # Simplified for this implementation
+        "solution": 1,
         "hint": "Create a double-threat situation."
     },
     {
@@ -80,8 +80,20 @@ PUZZLES = [
         "cells": ['X', ' ', ' ', 
                   ' ', 'O', ' ', 
                   ' ', ' ', ' '],
-        "solution": 2, # X taking another corner
+        "solution": 2,
         "hint": "Control the corners to limit your opponent."
+    },
+    {
+        "id": 5,
+        "name": "The 4x4 Wall",
+        "size": 4,
+        "win_condition": 3,
+        "cells": ['X', 'X', ' ', ' ', 
+                  'O', ' ', ' ', ' ', 
+                  ' ', ' ', ' ', ' ', 
+                  ' ', ' ', ' ', ' '],
+        "solution": 2,
+        "hint": "On a 4x4 board, the win condition is still 3. Complete the row!"
     }
 ]
 

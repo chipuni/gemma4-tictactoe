@@ -53,5 +53,16 @@
     "moves": [],
     "winner": "X",
     "mode": "PvE"
+  },
+  {
+    "size": 4,
+    "win_condition": 4,
+    "markers": {
+      "X": "X",
+      "O": "O"
+    },
+    "moves": [],
+    "winner": "X",
+    "mode": "PvP"
   }
 ]

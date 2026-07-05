@@ -70,15 +70,18 @@ class TicTacToeAI:
         sorted_moves = sorted(available_moves, key=lambda m: abs(m - center))
         
         best_move = -1
-        # Iterative Deepening: start with depth 1 and increase
         max_depth = 9 if board.size == 3 else 4
         
+        # Clear transposition table once per move to allow iterative deepening to build upon it
+        self.transposition_table.clear()
+
         for depth in range(1, max_depth + 1):
             current_best_move = -1
             best_score = -float('inf') if player == 'O' else float('inf')
 
             for move in sorted_moves:
                 board.cells[move] = player
+                # We pass depth to minimax; results are stored in the transposition table
                 score = self._minimax(board, 0, player != 'O', -float('inf'), float('inf'), depth)
                 board.cells[move] = ' '
 
@@ -86,10 +89,7 @@ class TicTacToeAI:
                     best_score = score
                     current_best_move = move
             
-            # Update global best move for this depth level
             best_move = current_best_move
-            
-            # If we found a winning move at this depth, stop early
             if (player == 'O' and best_score >= 90) or (player == 'X' and best_score <= -90):
                 break
                 
