@@ -10,23 +10,23 @@ class TicTacToeAI:
         self.transposition_table = {}
         self._turn_start_time = 0.0
 
-    def get_move(self, board: Board) -> int:
+    def get_move(self, board: Board, player: str = 'O') -> int:
         self._turn_start_time = time.time() # Mark turn start for time-bounded search
         self.transposition_table.clear() 
         if self.difficulty == 'Easy':
             return self._random_move(board)
         
         # Optimization: Check for immediate win or block first
-        immediate_move = self._check_immediate_move(board, 'O') # AI usually plays O
+        immediate_move = self._check_immediate_move(board, player)
         if immediate_move != -1:
             return immediate_move
-
+        
         if self.difficulty == 'Medium':
             if random.random() < 0.4:
                 return self._random_move(board)
-            return self._best_move(board)
+            return self._best_move(board, player)
         else: # Hard
-            return self._best_move(board)
+            return self._best_move(board, player)
 
     def _check_immediate_move(self, board: Board, player: str) -> int:
         """Checks if there is a move that immediately wins or blocks the opponent."""
@@ -62,7 +62,7 @@ class TicTacToeAI:
         available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
         return random.choice(available_moves) if available_moves else -1
 
-    def _best_move(self, board: Board) -> int:
+    def _best_move(self, board: Board, player: str) -> int:
         available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
         if not available_moves: return -1
 
@@ -71,14 +71,14 @@ class TicTacToeAI:
         center = (board.size * board.size) // 2
         sorted_moves = sorted(available_moves, key=lambda m: abs(m - center))
 
-        best_score = -float('inf')
+        best_score = -float('inf') if player == 'O' else float('inf')
         best_move = -1
 
         for move in sorted_moves:
-            board.cells[move] = 'O'
-            score = self._minimax(board, 0, False, -float('inf'), float('inf'), depth_limit)
+            board.cells[move] = player
+            score = self._minimax(board, 0, player != 'O', -float('inf'), float('inf'), depth_limit)
             board.cells[move] = ' '
-            if score > best_score:
+            if (player == 'O' and score > best_score) or (player == 'X' and score < best_score):
                 best_score = score
                 best_move = move
         

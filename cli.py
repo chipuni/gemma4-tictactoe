@@ -127,7 +127,7 @@ def play_game(session: GameSession):
         else:
             active_ai = session.ai_x if session.current_player == 'X' else session.ai_o
             thinking_spinner(session.cpu_speed)
-            move = active_ai.get_move(session.board)
+            move = active_ai.get_move(session.board, session.current_player)
             print(f"CPU chose position {Colors.BOLD}{move}{Colors.RESET}")
             if session.mode != 'CpuCpu':
                 input("Press Enter to continue...")
@@ -157,15 +157,63 @@ def play_game(session: GameSession):
                 print(f"{Colors.RED}Invalid move.{Colors.RESET}")
             input("Press Enter to continue...")
 
+def handle_puzzles():
+    clear_screen()
+    print(f"{Colors.BOLD}--- PUZZLE MODE ---{Colors.RESET}")
+    puzzles = get_puzzles()
+    if not puzzles:
+        print("No puzzles available.")
+        input("\nPress Enter to return to menu...")
+        return
+
+    for i, puzzle in enumerate(puzzles):
+        print(f"{i+1}. {puzzle['name']} (Size: {puzzle['size']}x{puzzle['size']})")
+    
+    choice = input("\nSelect a puzzle to solve (or 'c' to cancel): ")
+    if choice.isdigit():
+        idx = int(choice) - 1
+        if 0 <= idx < len(puzzles):
+            puzzle = puzzles[idx]
+            board = Board(size=puzzle['size'], win_condition=puzzle['win_condition'])
+            board.cells = list(puzzle['cells'])
+            player = puzzle.get('player', 'X')
+            
+            while True:
+                clear_screen()
+                print(f"{Colors.BOLD}Puzzle: {puzzle['name']}{Colors.RESET}")
+                print(f"You are playing as: {Colors.BOLD}{player}{Colors.RESET}")
+                board.display_fixed({'X': 'X', 'O': 'O'})
+                
+                move = input(f"Enter move for {player} (or 'h' for hint, 'c' to cancel): ").strip().lower()
+                if move == 'c':
+                    break
+                elif move == 'h':
+                    print(f"{Colors.YELLOW}HINT: {puzzle['hint']}{Colors.RESET}")
+                    input("Press Enter to continue...")
+                    continue
+                elif move.isdigit():
+                    move_idx = int(move)
+                    if move_idx == puzzle['solution']:
+                        print(f"\n{Colors.GREEN}{Colors.BOLD}CORRECT! You solved the puzzle!{Colors.RESET}")
+                        board.cells[move_idx] = player
+                        board.display_fixed({'X': 'X', 'O': 'O'})
+                    else:
+                        print(f"\n{Colors.RED}{Colors.BOLD}INCORRECT! Try again.{Colors.RESET}")
+                    input("\nPress Enter to continue...")
+                else:
+                    print("Invalid input.")
+        else:
+            print("Invalid selection.")
+    else:
+        print("Cancelled.")
+    input("\nPress Enter to return to menu...")
+
 def load_scores():
-    if os.path.exists('scores.json'):
-        with open('scores.json', 'r') as f:
-            return json.load(f)
-    return {'X': 0, 'O': 0, 'Draw': 0, 'Total': 0}
+    return load_stats()
 
 def save_scores(scores):
-    with open('scores.json', 'w') as f:
-        json.dump(scores, f)
+    save_stats(scores)
+
 
 def load_settings():
     if os.path.exists('settings.json'):
@@ -235,7 +283,7 @@ def handle_play_game(scores, settings):
         difficulty = {'1': 'Easy', '2': 'Medium', '3': 'Hard'}.get(diff_choice, 'Hard')
         speed_input = input(f"AI thinking speed [default {settings['cpu_speed']}s]: ")
         speed = float(speed_input) if speed_input.replace('.','',1).isdigit() else settings['cpu_speed']
-        session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, win_condition=condition=win_condition, markers=markers, cpu_speed=speed, blitz_time=blitz_time)
+        session = GameSession(mode='CpuCpu', difficulty=difficulty, size=size, win_condition=win_condition, markers=markers, cpu_speed=speed, blitz_time=blitz_time)
         # Note: Fixed a bug in the provided logic for choice 3 setup
 
     result = play_game(session)
@@ -447,7 +495,7 @@ def main():
                 handle_view_stats(scores)
             elif choice == '6':
                 handle_replay_games()
-            elif choice == '6':
+            elif choice == '7':
                 confirm = input("Are you sure you want to reset all scores? (y/n): ")
                 if confirm.lower() == 'y':
                     scores = {'X': 0, 'O': 0, 'Draw': 0, 'Total': 0}

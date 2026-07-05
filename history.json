@@ -1,0 +1,13 @@
+[
+  {
+    "size": 3,
+    "win_condition": 3,
+    "markers": {
+      "X": "X",
+      "O": "O"
+    },
+    "moves": [],
+    "winner": "O",
+    "mode": "PvE"
+  }
+]
