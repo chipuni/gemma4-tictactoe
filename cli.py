@@ -8,6 +8,7 @@ from game_manager import GameSession
 from history_manager import save_game_to_history, load_game_history
 from save_manager import save_game, load_game, list_save_slots
 from puzzles import get_puzzles
+from score_manager import load_stats, save_stats, update_stats
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -248,15 +249,17 @@ def handle_play_game(scores, settings):
 def handle_view_stats(scores):
     clear_screen()
     print(f"{Colors.BOLD}Overall Statistics:{Colors.RESET}")
-    total = scores['Total']
+    total = scores.get('Total', 0)
     if total > 0:
-        win_rate_x = (scores['X'] / total) * 100
-        win_rate_o = (scores['O'] / total) * 100
-        draw_rate = (scores['Draw'] / total) * 100
+        win_rate_x = (scores.get('X', 0) / total) * 100
+        win_rate_o = (scores.get('O', 0) / total) * 100
+        draw_rate = (scores.get('Draw', 0) / total) * 100
         print(f"Total Games: {total}")
-        print(f"Player X Wins: {scores['X']} ({win_rate_x:.1f}%)")
-        print(f"Player O Wins: {scores['O']} ({win_rate_o:.1f}%)")
-        print(f"Draws:        {scores['Draw']} ({draw_rate:.1f}%)")
+        print(f"Player X Wins: {scores.get('X', 0)} ({win_rate_x:.1f}%)")
+        print(f"Player O Wins: {scores.get('O', 0)} ({win_rate_o:.1f}%)")
+        print(f"Draws:        {scores.get('Draw', 0)} ({draw_rate:.1f}%)")
+        if 'avg_length' in scores:
+            print(f"Average Game Length: {scores['avg_length']:.2f} moves")
     else:
         print("No games played yet.")
     input("\nPress Enter to return to menu...")
@@ -330,6 +333,7 @@ def main():
             print_logo()
             print("\n" + "="*40)
             print(f"{Colors.BOLD}MAIN MENU{Colors.RESET}")
+            print("0. Quick Play (3x3 PvP)")
             print("1. Play Single Game")
             print("2. Tournament Mode (Best of N)")
             print("3. Load Saved Game")
@@ -343,7 +347,16 @@ def main():
             
             choice = input("\nSelect an option: ")
             
-            if choice == '1':
+            if choice == '0':
+                # Quick Play logic
+                session = GameSession(mode='PvP', size=3, win_condition=3)
+                result = play_game(session)
+                if result and result != "QUIT":
+                    scores['Total'] += 1
+                    if result != 'Draw': scores[result] += 1
+                    else: scores['Draw'] += 1
+                    save_scores(scores)
+            elif choice == '1':
                 scores = handle_play_game(scores, settings)
             elif choice == '2':
                 # Tournament Mode implementation
