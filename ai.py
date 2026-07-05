@@ -66,22 +66,33 @@ class TicTacToeAI:
         available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
         if not available_moves: return -1
 
-        # Depth increases as the game progresses or based on board size
-        depth_limit = 4 if board.size > 3 else 9
         center = (board.size * board.size) // 2
         sorted_moves = sorted(available_moves, key=lambda m: abs(m - center))
-
-        best_score = -float('inf') if player == 'O' else float('inf')
-        best_move = -1
-
-        for move in sorted_moves:
-            board.cells[move] = player
-            score = self._minimax(board, 0, player != 'O', -float('inf'), float('inf'), depth_limit)
-            board.cells[move] = ' '
-            if (player == 'O' and score > best_score) or (player == 'X' and score < best_score):
-                best_score = score
-                best_move = move
         
+        best_move = -1
+        # Iterative Deepening: start with depth 1 and increase
+        max_depth = 9 if board.size == 3 else 4
+        
+        for depth in range(1, max_depth + 1):
+            current_best_move = -1
+            best_score = -float('inf') if player == 'O' else float('inf')
+
+            for move in sorted_moves:
+                board.cells[move] = player
+                score = self._minimax(board, 0, player != 'O', -float('inf'), float('inf'), depth)
+                board.cells[move] = ' '
+
+                if (player == 'O' and score > best_score) or (player == 'X' and score < best_score):
+                    best_score = score
+                    current_best_move = move
+            
+            # Update global best move for this depth level
+            best_move = current_best_move
+            
+            # If we found a winning move at this depth, stop early
+            if (player == 'O' and best_score >= 90) or (player == 'X' and best_score <= -90):
+                break
+                
         return best_move if best_move != -1 else self._random_move(board)
 
     def _get_optimal_move(self, board: Board, player: str) -> int:
@@ -167,23 +178,33 @@ class TicTacToeAI:
     def _evaluate_board(self, board: Board) -> int:
         score = 0
         lines = board.get_winning_lines()
+        
+        # Positional bonuses for center and corners
+        center_idx = (board.size * board.size) // 2
+        corners = [0, board.size - 1, board.size * (board.size - 1), board.size * board.size - 1]
+        
+        # Weight for center cell
+        if board.cells[center_idx] == 'O': score += 2
+        elif board.cells[center_idx] == 'X': score -= 2
+        
+        # Weights for corners
+        for corner in corners:
+            if board.cells[corner] == 'O': score += 1
+            elif board.cells[corner] == 'X': score -= 1
+
         for line in lines:
             o_count = sum(1 for i in line if board.cells[i] == 'O')
             x_count = sum(1 for i in line if board.cells[i] == 'X')
             empty_count = len(line) - o_count - x_count
             
-            # Priority to lines that are close to winning
             if o_count > 0 and x_count == 0:
-                # Higher weight for lines that are almost complete
                 weight = (10 ** o_count) * (board.size - empty_count)
                 score += weight
             elif x_count > 0 and o_count == 0:
-                # Higher weight for lines that are almost complete
                 weight = (10 ** x_count) * (board.size - empty_count)
                 score -= weight
             elif o_count == 0 and x_count == 0:
-                # Favor center slightly more for larger boards
-                score += 1
+                score += 0 # Neutral lines don't add value here
         return score
 
 

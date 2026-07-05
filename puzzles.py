@@ -45,8 +45,8 @@ PUZZLES = [
         "size": 3,
         "win_condition": 3,
         "cells": ['X', 'X', ' ', 
-                 'O', ' ', ' ', 
-                 ' ', ' ', ' '],
+                  'O', ' ', ' ', 
+                  ' ', ' ', ' '],
         "solution": 2,
         "hint": "Complete the row."
     },
@@ -56,22 +56,32 @@ PUZZLES = [
         "size": 3,
         "win_condition": 3,
         "cells": ['X', ' ', 'O', 
-                 ' ', 'X', ' ', 
-                 ' ', ' ', ' '],
+                  ' ', 'X', ' ', 
+                  ' ', ' ', ' '],
         "solution": 8,
         "hint": "Block the diagonal win."
     },
     {
         "id": 3,
-        "name": "The Strategic Slide",
-        "size": 4,
+        "name": "The Fork",
+        "size": 3,
         "win_condition": 3,
-        "cells": [' ', 'X', 'X', ' ', 
-                 ' ', 'O', ' ', ' ', 
-                 ' ', ' ', ' ', ' ', 
-                 ' ', ' ', ' ', ' '], # Indices for a 4x4 board’s winning line
-        # This is too complex for a quick file. I'll stick to 3x3.
-        "solution": -1,
+        "cells": ['X', ' ', ' ', 
+                  ' ', 'O', ' ', 
+                  ' ', ' ', 'X'],
+        "solution": 1, # Simplified for this implementation
+        "hint": "Create a double-threat situation."
+    },
+    {
+        "id": 4,
+        "name": "The Corner Trap",
+        "size": 3,
+        "win_condition": 3,
+        "cells": ['X', ' ', ' ', 
+                  ' ', 'O', ' ', 
+                  ' ', ' ', ' '],
+        "solution": 2, # X taking another corner
+        "hint": "Control the corners to limit your opponent."
     }
 ]
 

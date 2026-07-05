@@ -9,5 +9,49 @@
     "moves": [],
     "winner": "O",
     "mode": "PvE"
+  },
+  {
+    "size": 3,
+    "win_condition": 3,
+    "markers": {
+      "X": "X",
+      "O": "O"
+    },
+    "moves": [],
+    "winner": "Draw",
+    "mode": "PvP"
+  },
+  {
+    "size": 4,
+    "win_condition": 4,
+    "markers": {
+      "X": "X",
+      "O": "O"
+    },
+    "moves": [],
+    "winner": "O",
+    "mode": "PvE"
+  },
+  {
+    "size": 4,
+    "win_condition": 4,
+    "markers": {
+      "X": "X",
+      "O": "O"
+    },
+    "moves": [],
+    "winner": "Draw",
+    "mode": "PvE"
+  },
+  {
+    "size": 6,
+    "win_condition": 4,
+    "markers": {
+      "X": "X",
+      "O": "O"
+    },
+    "moves": [],
+    "winner": "X",
+    "mode": "PvE"
   }
 ]
