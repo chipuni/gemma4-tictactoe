@@ -8,6 +8,35 @@ class Colors:
     RED = "\033[91m"
     BOLD = "\033[1m"
 
+class Themes:
+    CLASSIC = {
+        'X': Colors.BLUE,
+        'O': Colors.RED,
+        'border': Colors.RESET,
+        'highlight': Colors.YELLOW
+    }
+    NEON = {
+        'X': Colors.CYAN,
+        'O': Colors.GREEN,
+        'border': Colors.CYAN,
+        'highlight': Colors.BOLD + Colors.CYAN
+    }
+    PASTEL = {
+        'X': "\033[38;5;141m", 
+        'O': "\033[38;5;213m", 
+        'border': "\033[38;5;244m",
+        'highlight': Colors.BOLD + "\033[38;5;226m"
+    }
+    
+    @staticmethod
+    def get(theme_name):
+        themes = {
+            'Classic': Themes.CLASSIC,
+            'Neon': Themes.NEON,
+            'Pastel': Themes.PASTEL
+        }
+        return themes.get(theme_name, Themes.CLASSIC)
+
 from typing import Optional, List
 
 class Board:
@@ -17,17 +46,18 @@ class Board:
         self.cells = [' ' for _ in range(size * size)]
         self.history = [] # For undo functionality
 
-    def display_fixed(self, markers: dict = {'X': 'X', 'O': 'O'}, highlight_line: List[int] = None):
+    def display_fixed(self, markers: dict = {'X': 'X', 'O': 'O'}, highlight_line: List[int] = None, theme_name: str = 'Classic'):
+        theme = Themes.get(theme_name)
         print("\n")
         w = 3 if self.size < 10 else len(str(self.size * self.size - 1)) + 2
         h = "─" * w
         
         # Print column headers (A, B, C...)
         headers = "    " + " ".join([chr(65 + i) if i < 26 else f"{i//26+1}{chr(65 + i%26)}" for i in range(self.size)])
-        print(headers)
-
+        print(f"{theme['border']}{headers}{Colors.RESET}")
+        
         border_top = f"  ┌{'┬'.join([h]*self.size)}┐"
-        print(border_top)
+        print(f"{theme['border']}{border_top}{Colors.RESET}")
         
         for r in range(self.size):
             # Print row header (1, 2, 3...)
@@ -39,24 +69,24 @@ class Board:
                 
                 # Colors for markers
                 if cell == 'X': 
-                    fmt = f"{Colors.BLUE}{markers.get('X', 'X')}{Colors.RESET}"
+                    fmt = f"{theme['X']}{markers.get('X', 'X')}{Colors.RESET}"
                 elif cell == 'O': 
-                    fmt = f"{Colors.RED}{markers.get('O', 'O')}{Colors.RESET}"
+                    fmt = f"{theme['O']}{markers.get('O', 'O')}{Colors.RESET}"
                 else: 
                     fmt = " " if self.size == 3 else str(idx)
-
+                
                 # Highlight winning line in yellow background or bold
                 if highlight_line and idx in highlight_line:
-                    fmt = f"{Colors.YELLOW}{Colors.BOLD}{fmt}{Colors.RESET}"
+                    fmt = f"{theme['highlight']}{fmt}{Colors.RESET}"
                 
                 row_str += f" {fmt.center(w-2)} " + "│"
-            print(row_str)
+            print(f"{theme['border']}{row_str}{Colors.RESET}")
             if r < self.size - 1:
                 border_mid = f"├{'┼'.join([h]*self.size)}┤"
-                print(border_mid)
+                print(f"{theme['border']}{border_mid}{Colors.RESET}")
         
         border_bot = f"└{'┴'.join([h]*self.size)}┘"
-        print(border_bot + "\n")
+        print(f"{theme['border']}{border_bot}{Colors.RESET}\n")
 
     def make_move(self, position: int, player: str) -> bool:
         if 0 <= position < len(self.cells) and self.cells[position] == ' ':
@@ -122,9 +152,8 @@ class Board:
             'history': self.history
         }
     
-    @classmethod
-    def from_dict(cls, data: dict):
-        board = cls(size=data['size'], win_condition=data.get('win_condition', 3))
-        board.cells = data['cells']
-        board.history = data['history']
-        return board
+    def get_coord(self, pos: int) -> str:
+        row = pos // self.size
+        col = pos % self.size
+        col_char = chr(65 + col) if col < 26 else f"{col//26+1}{chr(65 + col%26)}"
+        return f"{col_char}{row + 1}"

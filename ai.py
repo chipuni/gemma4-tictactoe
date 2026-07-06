@@ -66,25 +66,24 @@ class TicTacToeAI:
         available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
         if not available_moves: return -1
 
+        # Dynamic depth based on board size and remaining cells
+        max_depth = 9 if board.size == 3 else (6 if len(available_moves) > 10 else 4)
+        
         center = (board.size * board.size) // 2
         sorted_moves = sorted(available_moves, key=lambda m: abs(m - center))
         
         best_move = -1
-        max_depth = 9 if board.size == 3 else 4
-        
-        # Clear transposition table once per move to allow iterative deepening to build upon it
         self.transposition_table.clear()
-
+        
         for depth in range(1, max_depth + 1):
             current_best_move = -1
             best_score = -float('inf') if player == 'O' else float('inf')
-
+            
             for move in sorted_moves:
                 board.cells[move] = player
-                # We pass depth to minimax; results are stored in the transposition table
                 score = self._minimax(board, 0, player != 'O', -float('inf'), float('inf'), depth)
                 board.cells[move] = ' '
-
+                
                 if (player == 'O' and score > best_score) or (player == 'X' and score < best_score):
                     best_score = score
                     current_best_move = move
@@ -101,13 +100,12 @@ class TicTacToeAI:
         available_moves = [i for i, x in enumerate(board.cells) if x == ' ']
         if not available_moves: return -1
 
-        # Iterative Deepening approach to prevent long freezes on large boards
-        # We start with a small depth and increase it if time permits (simplified here as fixed max)
-        max_depth = 4 if board.size > 3 else 9
+        # Dynamic depth for hints to provide high quality suggestions
+        max_depth = 9 if board.size == 3 else (6 if len(available_moves) > 10 else 4)
         
         center = (board.size * board.size) // 2
         sorted_moves = sorted(available_moves, key=lambda m: abs(m - center))
-
+        
         for move in sorted_moves:
             board.cells[move] = player
             score = self._minimax(board, 0, player != 'O', -float('inf'), float('inf'), max_depth)

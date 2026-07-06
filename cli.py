@@ -28,7 +28,7 @@ class GameCLI:
                     return json.load(f)
                 except json.JSONDecodeError:
                     pass
-        return {'size': 3, 'marker_x': 'X', 'marker_o': 'O', 'cpu_speed': 1.0}
+        return {'size': 3, 'marker_x': 'X', 'marker_o': 'O', 'cpu_speed': 1.0, 'theme': 'Classic'}
 
     def _save_settings(self, settings):
         with open('settings.json', 'w') as f:
@@ -75,7 +75,11 @@ class GameCLI:
             if session.blitz_time:
                 print(f"{Colors.YELLOW}{Colors.BOLD}BLITZ MODE: {session.blitz_time}s per move!{Colors.RESET}")
             print(f"{Colors.BLUE}{session.players['X']}{Colors.RESET} ({session.markers['X']}) | {Colors.RED}{session.players['O']}{Colors.RESET} ({session.markers['O']})")
-            session.board.display_fixed(session.markers)
+            session.board.display_fixed(session.markers, theme_name=self.settings['theme'])
+            
+            history_str = " | ".join([f"{session.markers[p]}: {session.board.get_coord(pos)}" for pos, p in session.board.history])
+            if history_str:
+                print(f"\n{Colors.BOLD}Move History:{Colors.RESET} {history_str}")
             
             if session.mode != 'CpuCpu':
                 print("\nCommands: [move 0-N], ['u' undo], ['s' save], ['h' hint]")
@@ -190,7 +194,7 @@ class GameCLI:
                     self.clear_screen()
                     print(f"{Colors.BOLD}Puzzle: {puzzle['name']}{Colors.RESET}")
                     print(f"You are playing as: {Colors.BOLD}{player}{Colors.RESET}")
-                    board.display_fixed({'X': 'X', 'O': 'O'})
+                        board.display_fixed({'X': 'X', 'O': 'O'}, theme_name=self.settings['theme'])
                     move = input(f"Enter move for {player} (or 'h' for hint, 'c' to cancel): ").strip().lower()
                     if move == 'c': break
                     elif move == 'h':
@@ -202,7 +206,7 @@ class GameCLI:
                         if move_idx == puzzle['solution']:
                             print(f"\n{Colors.GREEN}{Colors.BOLD}CORRECT! You solved the puzzle!{Colors.RESET}")
                             board.cells[move_idx] = player
-                            board.display_fixed({'X': 'X', 'O': 'O'})
+                            board.display_fixed({'X': 'X', 'O': 'O'}, theme_name=self.settings['theme'])
                         else: print(f"\n{Colors.RED}{Colors.BOLD}INCORRECT! Try again.{Colors.RESET}")
                         input("\nPress Enter to continue...")
                     else: print("Invalid input.")
@@ -244,11 +248,11 @@ class GameCLI:
                         temp_board.make_move(move_data['move'], move_data['player'])
                         self.clear_screen()
                         print(f"{Colors.BOLD}--- REPLAYING GAME ---{Colors.RESET}")
-                        temp_board.display_fixed(game['markers'])
+                        session.board.display_fixed(game['markers'], theme_name=self.settings['theme'])
                         time.sleep(0.5)
                     winner = game['winner']
                     winning_line = temp_board.get_winning_line()
-                    temp_board.display_fixed(game['markers'], highlight_line=winning_line)
+                        temp_board.display_fixed(game['markers'], highlight_line=winning_line, theme_name=self.settings['theme'])
                     print(f"Final Result: {winner}")
                     input("\nPress Enter to return to menu...")
                 else: print(f"{Colors.RED}Invalid selection!{Colors.RESET}")
@@ -261,7 +265,8 @@ class GameCLI:
         print("2. Change Default Marker X")
         print("3. Change Default Marker O")
         print("4. Change AI Speed")
-        print("5. Return to Main Menu")
+        print("5. Change Theme")
+        print("6. Return to Main Menu")
         set_choice = input("\nSelect an option: ")
         if set_choice == '1':
             val = input(f"New board size [default {self.settings['size']}]: ")
@@ -275,6 +280,10 @@ class GameCLI:
         elif set_choice == '4':
             val = input(f"New AI speed [default {self.settings['cpu_speed']}s]: ")
             if val.replace('.','',1).isdigit(): self.settings['cpu_speed'] = float(val)
+        elif set_choice == '5':
+            print("\nAvailable Themes:\n- Classic\n- Neon\n- Pastel")
+            val = input(f"New theme [default {self.settings['theme']}]: ").strip() or self.settings['theme']
+            if val in ['Classic', 'Neon', 'Pastel']: self.settings['theme'] = val
         self._save_settings(self.settings)
         input("\nPress Enter to return to menu...")
 
