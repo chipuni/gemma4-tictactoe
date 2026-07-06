@@ -4,7 +4,7 @@ import os
 from board import Board
 
 class GameSession:
-    def __init__(self, mode='PvP', difficulty='Hard', size=3, win_condition=3, markers=None, cpu_speed=1.0, blitz_time=None):
+    def __init__(self, mode='PvP', difficulty='Hard', size=3, win_condition=3, markers=None, cpu_speed=1.0, blitz_time=None, players=None):
         self.board = Board(size=size, win_condition=win_condition)
         self.current_player = 'X'
         self.mode = mode 
@@ -12,6 +12,7 @@ class GameSession:
         self.cpu_speed = cpu_speed
         self.blitz_time = blitz_time # Time in seconds per move
         self.markers = markers if markers else {'X': 'X', 'O': 'O'}
+        self.players = players if players else {'X': 'Player X', 'O': 'Player O'}
         from ai import TicTacToeAI
         self.ai_x = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
         self.ai_o = TicTacToeAI(difficulty=difficulty) if mode in ['PvE', 'CpuCpu'] else None
